@@ -30,6 +30,7 @@ namespace Python.Runtime {
 	static ResolveEventHandler rhandler;
 	static Dictionary<string, int> probed;
 	static List<Assembly> assemblies;	
+    // XXX static bool DEBUG_IMPORT = false;
 	internal static List<string> pypath;
 
 	private AssemblyManager() {}
@@ -182,13 +183,16 @@ namespace Python.Runtime {
 
 	public static Assembly LoadAssembly(string name) {
 	    Assembly assembly = null;
-	    try {
+        try
+        {
 
-		assembly = Assembly.LoadWithPartialName(name);
+            //assembly = Assembly.LoadWithPartialName(name);
+            assembly = Assembly.Load(name);
+            // XXX if (DEBUG_IMPORT) System.Console.WriteLine("LoadAssembly: " + name);
 
-	    }
-	    catch {
-	    }
+        }
+        catch (System.IO.FileNotFoundException) { }
+        catch (Exception e) { System.Console.WriteLine(e); }
 	    return assembly;
 	}
 
@@ -201,8 +205,10 @@ namespace Python.Runtime {
 	    string path = FindAssembly(name);
 	    Assembly assembly = null;
 	    if (path != null) {
+            // XXX if (DEBUG_IMPORT) System.Console.WriteLine("LoadAssemblyPath: " + path + " for " + name);
 		try   { assembly = Assembly.LoadFrom(path); }
-		catch {}
+        catch (System.IO.FileNotFoundException) { }
+        catch (Exception e) { System.Console.WriteLine(e); }
 	    }
 	    return assembly;
 	}
@@ -258,6 +264,7 @@ namespace Python.Runtime {
 		    for (int n = 0; n < names.Length; n++) {
 			s = (n == 0) ? names[0] : s + "." + names[n];
 			if (!namespaces.ContainsKey(s)) {
+                // XXX if (DEBUG_IMPORT) System.Console.WriteLine(s);
 			    namespaces.Add(s,
 					   new Dictionary<Assembly, string>()
 					   );
@@ -267,6 +274,7 @@ namespace Python.Runtime {
 
 		if (ns != null && !namespaces[ns].ContainsKey(assembly)) {
 		    namespaces[ns].Add(assembly, String.Empty);
+            // XXX if (DEBUG_IMPORT) System.Console.WriteLine(ns);
 		}
 
 		if (t.IsGenericTypeDefinition) {
@@ -335,6 +343,7 @@ namespace Python.Runtime {
 		    for (int i = 0; i < types.Length; i++) {
 			Type t = types[i];
 			if (t.Namespace == nsname) {
+                // XXX if (DEBUG_IMPORT) System.Console.WriteLine(t.Name);
 			    names.Add(t.Name);
 			}
 		    }
@@ -344,6 +353,7 @@ namespace Python.Runtime {
 		    if (key.Length > nslen && key.StartsWith(nsname)) {
 			string tail = key.Substring(nslen);
 			if (key.IndexOf('.') == -1) {
+                // XXX if (DEBUG_IMPORT) System.Console.WriteLine(key);
 			    names.Add(key);
 			} 
 		    }

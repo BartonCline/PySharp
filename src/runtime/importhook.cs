@@ -11,6 +11,9 @@ using System;
 using System.Collections;
 using System.Runtime.InteropServices;
 
+// XXX changed by Tiran
+// XXX http://thread.gmane.org/gmane.comp.python.dotnet/576
+
 namespace Python.Runtime {
 
     //========================================================================
@@ -22,7 +25,7 @@ namespace Python.Runtime {
 	static IntPtr py_import;
 	static ModuleObject root;
 	static MethodWrapper hook;
-	static ClrModule clr;
+    static ModuleObject clr;
 	static int preload;
 
 	//===================================================================
@@ -47,8 +50,8 @@ namespace Python.Runtime {
 	    root = new ModuleObject("");
 	    Runtime.PyDict_SetItemString(dict, "CLR", root.pyHandle);
 
-	    clr = new ClrModule("clr");
-	    Runtime.PyDict_SetItemString(dict, "clr", clr.pyHandle);
+        clr = new ModuleObject("clr"); // XXX changed by Tiran
+        Runtime.PyDict_SetItemString(dict, "clr", root.pyHandle); // XXX
 	    preload = -1;
 	}
 
@@ -107,9 +110,10 @@ namespace Python.Runtime {
 		return root.pyHandle;
 	    }
 
+        // XXX changed by Tiran
 	    if (mod_name == "clr") {
-		Runtime.Incref(clr.pyHandle);
-		return clr.pyHandle;
+		Runtime.Incref(root.pyHandle);
+		return root.pyHandle;
 	    }
 
 	    string realname = mod_name;

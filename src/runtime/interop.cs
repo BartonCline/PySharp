@@ -170,6 +170,7 @@ namespace Python.Runtime {
 	public static int nb_true_divide = 0;
 	public static int nb_inplace_floor_divide = 0;
 	public static int nb_inplace_true_divide = 0;
+        public static int nb_index = 0; // PY25
 
 	public static int mp_length = 0;
 	public static int mp_subscript = 0;
@@ -213,15 +214,21 @@ namespace Python.Runtime {
 	public static int Ready = (1 << 12);
 	public static int Readying = (1 << 13);
 	public static int HaveGC = (1 << 14);
+        // 15 and 16 are reserved for stackless
+        public static int HaveStacklessExtension = 0;
+        public static int HaveIndex = (1 << 17); // PY25
 	public static int Managed = (1 << 29);
 	public static int Subclass = (1 << 30);
-	public static int Default = (1 << 0) |
-	                     (1 << 1) |
-	                     (1 << 3) |
-	                     (1 << 5) | 
-	                     (1 << 6) | 
-	                     (1 << 7) |
-	                     (1 << 8) | 0;
+	public static int Default = (HaveGetCharBuffer |
+	                     HaveSequenceIn |
+	                     HaveInPlaceOps |
+	                     HaveRichCompare | 
+	                     HaveWeakRefs | 
+	                     HaveIter |
+	                     HaveClass |
+                         HaveStacklessExtension | 
+	                     HaveIndex | 
+	                     0);
     }
 
 
@@ -315,6 +322,7 @@ namespace Python.Runtime {
 	    pmap["nb_true_divide"] = p["BinaryFunc"];
 	    pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
 	    pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
+        pmap["nb_index"] = p["UnaryFunc"];
 
 	    pmap["sq_length"] = p["InquiryFunc"];
 	    pmap["sq_concat"] = p["BinaryFunc"];

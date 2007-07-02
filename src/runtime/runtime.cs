@@ -23,7 +23,7 @@ namespace Python.Runtime {
     /// before calling any of these methods.
     /// </summary>
 
-    internal const string dll = "python24";
+    internal const string dll = "python25"; // XXX PY2.5
     internal static bool wrap_exceptions;
     internal static bool is32bit;
 
@@ -108,6 +108,7 @@ namespace Python.Runtime {
         if (Runtime.PyObject_TYPE(op) == PyClassType) { 
         wrap_exceptions = true;
         }
+        wrap_exceptions = false;
         Runtime.Decref(op);
         Runtime.Decref(m);
 
