@@ -1,13 +1,13 @@
 # Makefile for the PythonRuntime .NET assembly and tests. Thanks to
 # Camilo Uribe <kmilo@softhome.net> for contributing Mono support.
 
-RELEASE=pythonnet-1.0-rc2-py2.4-clr1.1-src
+RELEASE=pythonnet-2.0-alpha2-py2.5-clr2.0-src
 RUNNER=
 ILDASM=ildasm
 ILASM=ilasm
 CSC=csc.exe
 
-all: python.exe CLR.dll Python.Test.dll
+all: python.exe clr.pyd Python.Test.dll
 
 
 python.exe: Python.Runtime.dll
@@ -24,8 +24,8 @@ Python.Runtime.dll:
 	cd ..; cd ..;
 
 
-CLR.dll: Python.Runtime.dll
-	$(ILASM) /nologo /dll /quiet /output=CLR.dll \
+clr.pyd: Python.Runtime.dll
+	$(ILASM) /nologo /dll /quiet /output=clr.pyd \
 	./src/runtime/clrmodule.il;
 
 

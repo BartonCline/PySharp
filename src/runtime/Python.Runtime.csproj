@@ -98,6 +98,7 @@
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
   <PropertyGroup>
-    <PostBuildEvent>ilasm /nologo /dll /quiet /output="$(TargetDir)clr.pyd" "$(ProjectDir)clrmodule.il"</PostBuildEvent>
+    <PostBuildEvent>ilasm /nologo /dll /quiet /output="$(TargetDir)clr.pyd" "$(ProjectDir)clrmodule.il"
+ilasm /nologo /dll /quiet /output="$(TargetDir)CLR.DLL" "$(ProjectDir)oldmodule.il"</PostBuildEvent>
   </PropertyGroup>
 </Project>

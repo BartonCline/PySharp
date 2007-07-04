@@ -10,6 +10,7 @@
 """Run all of the unit tests for this package."""
 
 import time
+import sys
 
 test_modules = (
         'test_exceptions',
@@ -45,5 +46,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
+    if '--pause' in sys.argv:
+        print "Press enter to continue"
+        raw_input()

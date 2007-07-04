@@ -58,6 +58,25 @@ namespace Python.Runtime {
 	    }
 	}
 
+        /// <summary>
+        ///  Shortcut for (pointer == NULL) -> throw PythonException
+        /// </summary>
+        /// <param name="pointer">Pointer to a Python object</param>
+        internal unsafe static void ErrorCheck(IntPtr pointer) {
+            if (pointer == IntPtr.Zero) {
+                throw new PythonException();
+            }
+        }
+
+        /// <summary>
+        ///  Shortcut for (pointer == NULL or ErrorOccurred()) -> throw PythonException
+        /// </summary>
+        ///  Shortcut for (pointer == NULL) -> throw PythonException
+        internal unsafe static void ErrorOccurredCheck(IntPtr pointer) {
+            if ((pointer == IntPtr.Zero) || Exceptions.ErrorOccurred()) {
+                throw new PythonException();
+            }
+        }
 
 	// Versions of CPython up to 2.4 do not allow exceptions to be
 	// new-style classes. To get around that restriction and provide
@@ -185,8 +204,11 @@ namespace Python.Runtime {
 	    // Get / generate a class wrapper, instantiate it and set its
 	    // _inner attribute to the real new-style exception instance.
 	    IntPtr ct = GetExceptionClassWrapper(tp);
+            Exceptions.ErrorCheck(ct);
 	    IntPtr op = Runtime.PyInstance_NewRaw(ct, IntPtr.Zero);
+            Exceptions.ErrorCheck(op);
 	    IntPtr d = Runtime.PyObject_GetAttrString(op, "__dict__");
+            Exceptions.ErrorCheck(d);
 	    Runtime.PyDict_SetItemString(d, "_inner", real);
 	    Runtime.Decref(d);
 	    return op;

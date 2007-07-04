@@ -1,6 +1,13 @@
 Python for .NET Changes
 -----------------------
 
+  PythonNet 2.0 alpha 2
+  ---------------------------------------------------------------------------
+  
+    - First work on Python 2.5 compatibility
+    
+    - Added VS 2005 solution and project files
+
   PythonNet 2.0 alpha 1
   ---------------------------------------------------------------------------
 

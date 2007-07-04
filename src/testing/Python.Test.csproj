@@ -61,6 +61,7 @@
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
   <PropertyGroup>
-    <PostBuildEvent>ilasm /nologo /dll /quiet /output="$(TargetDir)clr.pyd" "$(ProjectDir)../runtime/clrmodule.il"</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetDir)Python.Test.dll" ..\..\..\..\
+copy "$(TargetDir)*.pdb" ..\..\..\..\</PostBuildEvent>
   </PropertyGroup>
 </Project>
