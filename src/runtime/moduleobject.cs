@@ -26,12 +26,14 @@ namespace Python.Runtime {
 	Dictionary<string, ManagedType> cache;
 	internal string moduleName;
 	internal IntPtr dict;
-	string _namespace;
-	static bool hacked;
-
+	protected string _namespace;
 
 	public ModuleObject(string name) : base() {
-	    moduleName = (name == String.Empty) ? "CLR" : name;
+            if (name == String.Empty)
+            {
+                throw new ArgumentException("Name must not be empty!");
+            }
+	    moduleName = name;
 	    cache = new Dictionary<string, ManagedType>();
 	    _namespace = name;
 
@@ -43,20 +45,6 @@ namespace Python.Runtime {
 	    Runtime.Decref(pyname);
 
 	    Marshal.WriteIntPtr(this.pyHandle, ObjectOffset.ob_dict, dict);
-
-	    // This hackery is required in order to allow a plain Python to
-	    // import the managed runtime via the CLR bootstrapper module. 
-	    // The standard Python machinery in control at the time of the
-	    // import requires the module to pass PyModule_Check. :(
-
-	    if (!hacked) {
-		IntPtr type = this.tpHandle;
-		IntPtr mro = Marshal.ReadIntPtr(type, TypeOffset.tp_mro);
-		IntPtr ext = Runtime.ExtendTuple(mro, Runtime.PyModuleType);
-		Marshal.WriteIntPtr(type, TypeOffset.tp_mro, ext);
-		Runtime.Decref(mro);
-		hacked = true;
-	    }
 	}
 
 
@@ -259,5 +247,31 @@ namespace Python.Runtime {
 
     }
 
+    /// <summary>
+    /// The CLR module is the root handler used by the magic import hook
+    /// to import assemblies. It has a fixed module name "clr" and doesn't
+    /// provide a namespace.
+    /// </summary>
+    internal class CLRModule : ModuleObject
+    {
+        protected static bool hacked = false;
+        public CLRModule() : base("clr") {
+            _namespace = String.Empty;
+
+            // This hackery is required in order to allow a plain Python to
+            // import the managed runtime via the CLR bootstrapper module. 
+            // The standard Python machinery in control at the time of the
+            // import requires the module to pass PyModule_Check. :(
+            if (!hacked)
+            {
+                IntPtr type = this.tpHandle;
+                IntPtr mro = Marshal.ReadIntPtr(type, TypeOffset.tp_mro);
+                IntPtr ext = Runtime.ExtendTuple(mro, Runtime.PyModuleType);
+                Marshal.WriteIntPtr(type, TypeOffset.tp_mro, ext);
+                Runtime.Decref(mro);
+                hacked = true;
+            }
+        }
+    }
 
 }

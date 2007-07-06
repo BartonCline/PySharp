@@ -78,7 +78,7 @@ namespace Python.Runtime {
 		if (!mi[i].IsGenericMethodDefinition) {
 		    continue;
 		}
-		Type[] args = mi[0].GetGenericArguments();
+		Type[] args = mi[i].GetGenericArguments();
 		if (args.Length != count) {
 		    continue;
 		}
@@ -241,7 +241,7 @@ namespace Python.Runtime {
 
 	    if (binding == null) {
 		Exceptions.SetError(Exceptions.TypeError, 
-				    "no method matches given arguments"
+				    "No method matches given arguments"
 				    );
 		return IntPtr.Zero;
 	    }

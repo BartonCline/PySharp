@@ -29,6 +29,7 @@ namespace Python.Runtime {
 
 	internal static void Initialize() {
 	    IntPtr module = Runtime.PyImport_ImportModule("exceptions");
+            Exceptions.ErrorCheck(module);
 	    Type type = typeof(Exceptions);
 	    foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | 
 						    BindingFlags.Static)) {
@@ -360,7 +361,51 @@ namespace Python.Runtime {
 	    Runtime.PyErr_Clear();
 	}
 
+        //====================================================================
+        // helper methods for raising warnings
+        //====================================================================
 
+        public static void warn(string message, string exceptionName, int stacklevel)
+        {
+            IntPtr excMod = Runtime.PyImport_ImportModule("exceptions");
+            Exceptions.ErrorCheck(excMod);
+            IntPtr excClass = Runtime.PyObject_GetAttrString(excMod, exceptionName);
+            Exceptions.ErrorCheck(excClass);
+            Runtime.Decref(excMod);
+
+            IntPtr warningsMod = Runtime.PyImport_ImportModule("warnings");
+            Exceptions.ErrorCheck(warningsMod);
+            IntPtr warnFunc = Runtime.PyObject_GetAttrString(warningsMod, "warn");
+            Exceptions.ErrorCheck(warnFunc);
+            Runtime.Decref(warningsMod);
+
+            IntPtr args = Runtime.PyTuple_New(3);
+            Exceptions.ErrorCheck(args);
+            Runtime.PyTuple_SetItem(args, 0, Runtime.PyString_FromString(message));
+            Runtime.PyTuple_SetItem(args, 1, excClass);
+            Runtime.PyTuple_SetItem(args, 2, Runtime.PyInt_FromInt32(stacklevel));
+            IntPtr result = Runtime.PyObject_Call(warnFunc, args, IntPtr.Zero);
+            Exceptions.ErrorCheck(result);
+            Runtime.Decref(warnFunc);
+            Runtime.Decref(excClass);
+            Runtime.Decref(args);
+            Runtime.Decref(result);
+        }
+
+        public static void warn(string message, string exceptionName)
+        {
+            warn(message, exceptionName, 1);
+        }
+
+        public static void deprecation(string message, int stacklevel)
+        {
+            warn(message, "DeprecationWarning", stacklevel);
+        }
+
+        public static void deprecation(string message)
+        {
+            deprecation(message, 1);
+        }
 
 	//====================================================================
 	// Internal helper methods for common error handling scenarios.

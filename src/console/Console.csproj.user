@@ -4,7 +4,8 @@
     <StartAction>Project</StartAction>
     <StartWorkingDirectory>
     </StartWorkingDirectory>
-    <StartArguments>..\..\..\tests\runtests.py --pause</StartArguments>
+    <StartArguments>
+    </StartArguments>
   </PropertyGroup>
   <PropertyGroup>
     <PublishUrlHistory>publish\</PublishUrlHistory>
@@ -19,5 +20,8 @@
     <ApplicationRevision>0</ApplicationRevision>
     <FallbackCulture>de-DE</FallbackCulture>
     <VerifyUploadedFiles>false</VerifyUploadedFiles>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'UnitTests|AnyCPU' ">
+    <StartArguments>..\..\..\tests\runtests.py --pause</StartArguments>
   </PropertyGroup>
 </Project>

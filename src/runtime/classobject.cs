@@ -165,8 +165,8 @@ namespace Python.Runtime {
 	    if (gtype != null) {
 		GenericType g = ClassManager.GetClass(gtype) as GenericType;
 		return g.type_subscript(idx);
-		Runtime.Incref(g.pyHandle);
-		return g.pyHandle;
+		/*Runtime.Incref(g.pyHandle);
+		return g.pyHandle;*/
 	    }
 	    return Exceptions.RaiseTypeError("unsubscriptable object");
  	}

@@ -30,6 +30,13 @@
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'UnitTests|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\UnitTests\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
@@ -53,7 +60,6 @@
   </ProjectExtensions>
   <PropertyGroup>
     <PostBuildEvent>ilasm /nologo /dll /quiet /output="$(TargetDir)clr.pyd" "$(ProjectDir)..\runtime\clrmodule.il"
-ilasm /nologo /dll /quiet /output="$(TargetDir)CLR.DLL" "$(ProjectDir)..\runtime\oldmodule.il"
 copy "$(TargetDir)Python.Runtime.dll" ..\..\..\..\
 copy "$(TargetDir)python.exe" ..\..\..\..\
 copy "$(TargetDir)clr.pyd" ..\..\..\..\

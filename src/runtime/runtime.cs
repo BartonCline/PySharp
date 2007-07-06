@@ -22,8 +22,18 @@ namespace Python.Runtime {
     /// the responsibility of the caller to have acquired the GIL
     /// before calling any of these methods.
     /// </summary>
-
-    internal const string dll = "python25"; // XXX PY2.5
+#if (PYTHON24)
+        internal const string dll = "python24";
+#endif
+#if (PYTHON25)
+        internal const string dll = "python25";
+#endif
+#if (PYTHON26)
+        internal const string dll = "python26";
+#endif
+#if ! (PYTHON24 || PYTHON25 || PYTHOn26)
+#error You must define either PYTHON24 or PYTHON25!
+#endif
     internal static bool wrap_exceptions;
     internal static bool is32bit;
 
@@ -105,10 +115,13 @@ namespace Python.Runtime {
 
         IntPtr m = PyImport_ImportModule("exceptions");
         op = Runtime.PyObject_GetAttrString(m, "Exception");
-        if (Runtime.PyObject_TYPE(op) == PyClassType) { 
-        wrap_exceptions = true;
-        }
+#if (PYTHON25)
         wrap_exceptions = false;
+#else
+        if (Runtime.PyObject_TYPE(op) == PyClassType) { 
+            wrap_exceptions = true;
+        }
+#endif
         Runtime.Decref(op);
         Runtime.Decref(m);
 

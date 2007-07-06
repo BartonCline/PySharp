@@ -6,21 +6,25 @@ RUNNER=
 ILDASM=ildasm
 ILASM=ilasm
 CSC=csc.exe
+#PYTHONVER=PYTHON24
+PYTHONVER=PYTHON25
+#PYTHONVER=PYTHON26
 
 all: python.exe clr.pyd Python.Test.dll
 
+cleanall: clean all
 
 python.exe: Python.Runtime.dll
 	cd src; cd console; \
-	$(CSC) /nologo /target:exe /out:../../python.exe \
+	$(CSC) /define:$(PYTHONVER)  /nologo /target:exe /out:../../python.exe \
         /reference:../../Python.Runtime.dll /recurse:*.cs
 	cd ..; cd ..;
 
 
 Python.Runtime.dll:
 	cd src; cd runtime; \
-	$(CSC) /nologo /unsafe /target:library /out:../../Python.Runtime.dll \
-        /recurse:*.cs
+	$(CSC) /define:$(PYTHONVER) /nologo /unsafe /target:library \
+        /out:../../Python.Runtime.dll /recurse:*.cs
 	cd ..; cd ..;
 
 
@@ -31,38 +35,45 @@ clr.pyd: Python.Runtime.dll
 
 Python.Test.dll: Python.Runtime.dll
 	cd src; cd testing; \
-	$(CSC) /nologo /target:library /out:../../Python.Test.dll \
-	/reference:../../Python.Runtime.dll \
-	/recurse:*.cs
+	$(CSC) /define:$(PYTHONVER)  /nologo /target:library \
+        /out:../../Python.Test.dll /reference:../../Python.Runtime.dll \
+	    /recurse:*.cs
 	cd ..; cd ..;
 
 
 clean:
 	rm -f python.exe Python*.dll Python*.il Python*.il2 Python*.res
+	rm -f clr.pyd
 	rm -f CLR.dll
+	rm -f *.pyd
 	rm -f ./*~
-	cd src; cd console; rm -f *~; cd ..; cd ..;
-	cd src; cd runtime; rm -f *~; cd ..; cd ..;
-	cd src; cd testing; rm -f *~; cd ..; cd ..;
+	cd src; cd console; rm -f *~; rm -rf bin; rm -rf obj; cd ..; cd ..;
+	cd src; cd runtime; rm -f *~; rm -rf bin; rm -rf obj; cd ..; cd ..;
+	cd src; cd testing; rm -f *~; rm -rf bin; rm -rf obj; cd ..; cd ..;
+	cd src; cd embed_tests; rm -f *~; rm -rf bin; rm -rf obj; rm -f TestResult.xml; cd ..; cd ..;
 	cd src; cd tests; rm -f *~; rm -f *.pyc; cd ..; cd ..;
 	cd doc; rm -f *~; cd ..;
 	cd demo; rm -f *~; cd ..;
 
 
-test:
+test: all
 	rm -f ./src/tests/*.pyc
 	$(RUNNER) ./python.exe ./src/tests/runtests.py
 
 
-dist: clean
+dist: clean all
+	rm -rf ./$(RELEASE)
 	mkdir ./$(RELEASE)
-	cp -R ./makefile ./$(RELEASE)/
-	cp -R ./demo ./$(RELEASE)/
-	cp -R ./doc ./$(RELEASE)/
-	cp -R ./src ./$(RELEASE)/
-	make
+	mkdir -p ./release
+	cp ./makefile ./$(RELEASE)/
+	cp ./*.sln ./$(RELEASE)/
+	cp ./*.txt ./$(RELEASE)/
+	svn export ./demo ./$(RELEASE)/demo/
+	svn export ./doc ./$(RELEASE)/doc/
+	svn export ./src ./$(RELEASE)/src/
 	cp ./python.exe ./$(RELEASE)/
 	cp ./*.dll ./$(RELEASE)/
+	cp ./*.pyd ./$(RELEASE)/
 	tar czf $(RELEASE).tgz ./$(RELEASE)/
 	mv $(RELEASE).tgz ./release/
 	rm -rf ./$(RELEASE)/

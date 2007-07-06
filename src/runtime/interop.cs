@@ -170,7 +170,9 @@ namespace Python.Runtime {
 	public static int nb_true_divide = 0;
 	public static int nb_inplace_floor_divide = 0;
 	public static int nb_inplace_true_divide = 0;
-        public static int nb_index = 0; // PY25
+#if (PYTHON25 || PYTHON26)
+        public static int nb_index = 0;
+#endif
 
 	public static int mp_length = 0;
 	public static int mp_subscript = 0;
@@ -216,19 +218,35 @@ namespace Python.Runtime {
 	public static int HaveGC = (1 << 14);
         // 15 and 16 are reserved for stackless
         public static int HaveStacklessExtension = 0;
-        public static int HaveIndex = (1 << 17); // PY25
-	public static int Managed = (1 << 29);
-	public static int Subclass = (1 << 30);
+#if (PYTHON25 || PYTHON26)
+        public static int HaveIndex = (1 << 17);
+#endif
+        public static int Managed = (1 << 21); // PythonNet specific?
+        public static int Subclass = (1 << 22); // PythonNet specific?
+#if (PYTHON26)
+        // TODO: Implement FastSubclass functions
+        public static int IntSubclass = (1 << 23);
+        public static int LongSubclass = (1 << 24);
+        public static int ListSubclass = (1 << 25);
+        public static int TupleSubclass = (1 << 26);
+        public static int StringSubclass = (1 << 27);
+        public static int UnicodeSubclass = (1 << 28);
+        public static int DictSubclass = (1 << 29);
+        public static int BaseExceptionSubclass = (1 << 30);
+        public static int TypeSubclass = (1 << 31);
+#endif
 	public static int Default = (HaveGetCharBuffer |
 	                     HaveSequenceIn |
 	                     HaveInPlaceOps |
-	                     HaveRichCompare | 
-	                     HaveWeakRefs | 
+	                     HaveRichCompare |
+	                     HaveWeakRefs |
 	                     HaveIter |
 	                     HaveClass |
-                         HaveStacklessExtension | 
+                             HaveStacklessExtension |
+#if (PYTHON25 || PYTHON26)
 	                     HaveIndex | 
-	                     0);
+#endif
+                             0);
     }
 
 
@@ -322,7 +340,9 @@ namespace Python.Runtime {
 	    pmap["nb_true_divide"] = p["BinaryFunc"];
 	    pmap["nb_inplace_floor_divide"] = p["BinaryFunc"];
 	    pmap["nb_inplace_true_divide"] = p["BinaryFunc"];
-        pmap["nb_index"] = p["UnaryFunc"];
+#if (PYTHON25 || Python26)
+            pmap["nb_index"] = p["UnaryFunc"];
+#endif
 
 	    pmap["sq_length"] = p["InquiryFunc"];
 	    pmap["sq_concat"] = p["BinaryFunc"];

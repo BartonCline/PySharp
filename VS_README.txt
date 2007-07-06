@@ -18,12 +18,25 @@ of the project.
    project starts a Python console
    
  * Debug
-   Builds the same files as Release bug the console project runs the unit
-   test suite inside a console.
+   Same as Release but creates a build with debug symbols
+   
+ * UnitTest
+   Builds a Debug build. The console project invokes runtests.py instead of
+   opening a Python shell.
    
  * EmbeddingTest
    Builds Python.EmbeddingTests and its dependencies. The configuration
-  requires the NUunit framework.
+   requires the NUunit framework.
+   
+Python version
+--------------
+
+You can switch the destination version by defining either PYTHON24 or PYTHON25
+inside the Python.Runtime project. 
+
+ ** Don't forget to force a rebuild after you have altered the setting! **
+
+MS VS doesn't take changes to define into account.
 
 
 Thanks to Virgil Duprasfor his original VS howto!

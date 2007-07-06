@@ -562,7 +562,7 @@ class MethodTests(unittest.TestCase):
         value = MethodTest.Overloaded.__overloads__[ISayHello1](inst)
         self.failUnless(value.__class__ == inst.__class__)
 
-        atype = Array.__overloads__[System.Object]
+        atype = Array[System.Object]
         value = MethodTest.Overloaded.__overloads__[str, int, atype](
             "one", 1, atype([1, 2, 3])
             )

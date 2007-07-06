@@ -11,9 +11,6 @@ using System;
 using System.Collections;
 using System.Runtime.InteropServices;
 
-// XXX changed by Tiran
-// XXX http://thread.gmane.org/gmane.comp.python.dotnet/576
-
 namespace Python.Runtime {
 
     //========================================================================
@@ -23,9 +20,8 @@ namespace Python.Runtime {
     internal class ImportHook {
 
 	static IntPtr py_import;
-	static ModuleObject root;
+	static CLRModule root;
 	static MethodWrapper hook;
-    static ModuleObject clr;
 	static int preload;
 
 	//===================================================================
@@ -47,11 +43,10 @@ namespace Python.Runtime {
   	    Runtime.PyObject_SetAttrString(mod, "__import__", hook.ptr);
 	    Runtime.Decref(hook.ptr);
 
-	    root = new ModuleObject("");
+	    root = new CLRModule();
+            Runtime.Incref(root.pyHandle); // we are using the module two times
 	    Runtime.PyDict_SetItemString(dict, "CLR", root.pyHandle);
-
-        clr = new ModuleObject("clr"); // XXX changed by Tiran
-        Runtime.PyDict_SetItemString(dict, "clr", root.pyHandle); // XXX
+            Runtime.PyDict_SetItemString(dict, "clr", root.pyHandle);
 	    preload = -1;
 	}
 
@@ -62,6 +57,7 @@ namespace Python.Runtime {
 
 	internal static void Shutdown() {
 	    Runtime.Decref(root.pyHandle);
+            Runtime.Decref(root.pyHandle);
 	    Runtime.Decref(py_import);
 	}
 
@@ -106,11 +102,12 @@ namespace Python.Runtime {
 	    string mod_name = Runtime.GetManagedString(py_mod_name);
 
 	    if (mod_name == "CLR") {
+                Exceptions.deprecation("The CLR module is deprecated. " +
+                                       "Please use 'clr'.");
 		Runtime.Incref(root.pyHandle);
 		return root.pyHandle;
 	    }
 
-        // XXX changed by Tiran
 	    if (mod_name == "clr") {
 		Runtime.Incref(root.pyHandle);
 		return root.pyHandle;
@@ -118,7 +115,10 @@ namespace Python.Runtime {
 
 	    string realname = mod_name;
 	    if (mod_name.StartsWith("CLR.")) {
-		realname = mod_name.Substring(4);
+                realname = mod_name.Substring(4);
+                string msg = String.Format("Importing from the CLR.* namespace "+
+                    "is deprecated. Please import '{0}' directly.", realname);
+                Exceptions.deprecation(msg);
 	    }
 
 	    string[] names = realname.Split('.');

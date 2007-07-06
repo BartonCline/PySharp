@@ -305,7 +305,8 @@ class ExceptionTests(unittest.TestCase):
         try:
             Convert.ToDateTime('this will fail')
         except FormatException, e:
-            self.failUnless(str(e).find('at System.DateTime.Parse') > -1)
+            msg = unicode(e).encode("utf8") # fix for international installation
+            self.failUnless(msg.find('System.DateTime.Parse(') > -1)
 
 
     def testExceptionIsInstanceOfSystemObject(self):
