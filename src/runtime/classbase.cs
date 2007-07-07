@@ -26,12 +26,13 @@ namespace Python.Runtime {
 
     internal class ClassBase : ManagedType {
 
-	internal bool is_exception;
+        internal bool is_exception {
+            get { return false; }
+        }
 	internal Indexer indexer;
 	internal Type type;
 
 	internal ClassBase(Type tp) : base() {
-	    is_exception = false;
 	    indexer = null;
 	    type = tp;
 	}

@@ -114,7 +114,9 @@ namespace Python.Runtime {
         // be used as exceptions (Python versions 2.4 and lower).
 
         IntPtr m = PyImport_ImportModule("exceptions");
+        Exceptions.ErrorCheck(m);
         op = Runtime.PyObject_GetAttrString(m, "Exception");
+        Exceptions.ErrorCheck(op);
 #if (PYTHON25)
         wrap_exceptions = false;
 #else
@@ -124,8 +126,6 @@ namespace Python.Runtime {
 #endif
         Runtime.Decref(op);
         Runtime.Decref(m);
-
-        //wrap_exceptions = false;
 
         // Initialize modules that depend on the runtime class.
         AssemblyManager.Initialize();

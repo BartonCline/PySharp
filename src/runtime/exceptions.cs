@@ -16,6 +16,26 @@ using System.Runtime.InteropServices;
 namespace Python.Runtime {
 
     /// <summary>
+    /// Base class for Python types that reflect managed exceptions based on
+    /// System.Exception
+    /// </summary>
+    /// <remarks>
+    /// The Python wrapper for managed exceptions LIES about its inheritance
+    /// tree. Although the real System.Exception is a subclass of 
+    /// System.Object the Python type for System.Exception does NOT claim that
+    /// it subclasses System.Object. Instead TypeManager.CreateType() uses 
+    /// Python's exception.Exception class as base class for System.Exception.
+    /// </remarks>
+    internal class ExceptionClassObject : ClassObject {
+
+        internal new bool is_exception {
+            get { return true; }
+        }
+
+        internal ExceptionClassObject(Type tp) : base(tp) {}
+    }
+
+    /// <summary>
     /// Encapsulates the Python exception APIs.
     /// </summary>
 
@@ -34,9 +54,12 @@ namespace Python.Runtime {
 	    foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | 
 						    BindingFlags.Static)) {
 		IntPtr op = Runtime.PyObject_GetAttrString(module, fi.Name);
-		if (op != IntPtr.Zero) {
-		    fi.SetValue(type, op);
-		}
+                if (op != IntPtr.Zero) {
+                    fi.SetValue(type, op);
+                }
+                else {
+                    DebugUtil.Print("Unknown exception: " + fi.Name);
+                }
 	    }
 	    Runtime.Decref(module);
 	    Runtime.PyErr_Clear();
@@ -365,8 +388,12 @@ namespace Python.Runtime {
         // helper methods for raising warnings
         //====================================================================
 
+        /// <summary>
+        /// XXX This method is buggy! It causes an access violation.
+        /// </summary>
         public static void warn(string message, string exceptionName, int stacklevel)
         {
+            return; // XXX
             IntPtr excMod = Runtime.PyImport_ImportModule("exceptions");
             Exceptions.ErrorCheck(excMod);
             IntPtr excClass = Runtime.PyObject_GetAttrString(excMod, exceptionName);
@@ -420,13 +447,19 @@ namespace Python.Runtime {
 	public static IntPtr ArithmeticError;
 	public static IntPtr AssertionError;
 	public static IntPtr AttributeError;
+#if (PYTHON25 || PYTHON26)
+        public static IntPtr BaseException;
+#endif
 	public static IntPtr DeprecationWarning;
 	public static IntPtr EOFError;
 	public static IntPtr EnvironmentError;
 	public static IntPtr Exception;
 	public static IntPtr FloatingPointError;
+        public static IntPtr FutureWarning;
+        public static IntPtr GeneratorExit;
 	public static IntPtr IOError;
 	public static IntPtr ImportError;
+        public static IntPtr ImportWarning;
 	public static IntPtr IndentationError;
 	public static IntPtr IndexError;
 	public static IntPtr KeyError;
@@ -437,7 +470,8 @@ namespace Python.Runtime {
 	public static IntPtr NotImplementedError;
 	public static IntPtr OSError;
 	public static IntPtr OverflowError;
-	public static IntPtr OverflowWarning;
+        //public static IntPtr OverflowWarning;
+        public static IntPtr PendingDeprecationWarning;
 	public static IntPtr ReferenceError;
 	public static IntPtr RuntimeError;
 	public static IntPtr RuntimeWarning;
@@ -450,7 +484,11 @@ namespace Python.Runtime {
 	public static IntPtr TabError;
 	public static IntPtr TypeError;
 	public static IntPtr UnboundLocalError;
+        public static IntPtr UnicodeDecodeError;
+        public static IntPtr UnicodeEncodeError;
 	public static IntPtr UnicodeError;
+        public static IntPtr UnicodeTranslateError;
+        public static IntPtr UnicodeWarning;
 	public static IntPtr UserWarning;
 	public static IntPtr ValueError;
 	public static IntPtr Warning;

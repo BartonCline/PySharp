@@ -20,13 +20,13 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>.\bin\Release\</OutputPath>
-    <DefineConstants>TRACE;PYTHON25</DefineConstants>
+    <DefineConstants>TRACE;PYTHON24</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'EmbeddingTest|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\EmbeddingTest\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON25</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;PYTHON24</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
     <DebugType>full</DebugType>
@@ -35,7 +35,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'UnitTests|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\UnitTests\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON25</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;PYTHON24</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
     <DebugType>full</DebugType>

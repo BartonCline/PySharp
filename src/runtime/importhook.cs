@@ -103,7 +103,7 @@ namespace Python.Runtime {
 
 	    if (mod_name == "CLR") {
                 Exceptions.deprecation("The CLR module is deprecated. " +
-                                       "Please use 'clr'.");
+                    "Please use 'clr'.");
 		Runtime.Incref(root.pyHandle);
 		return root.pyHandle;
 	    }

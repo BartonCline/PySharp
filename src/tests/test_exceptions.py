@@ -297,7 +297,7 @@ class ExceptionTests(unittest.TestCase):
         from System import Convert, FormatException
         
         e = NullReferenceException('')
-        self.failUnless(str(e) == '')
+        self.failUnlessEqual(str(e), '')
 
         e = NullReferenceException('Something bad happened')
         self.failUnless(str(e).startswith('Something bad happened'))
