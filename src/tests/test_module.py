@@ -25,7 +25,23 @@ class ModuleTests(unittest.TestCase):
            the first test run in the unit tests!"""
 
         from System import String
-
+        
+    def testPreloadVar(self):
+        import clr
+        self.failUnless(clr.preload is False, clr.preload)
+        try:
+            clr.preload = True
+            self.failUnless(clr.preload is True, clr.preload)
+            clr.preload = 0
+            self.failUnless(clr.preload is False, clr.preload)
+            clr.preload = 1
+            self.failUnless(clr.preload is True, clr.preload)
+            
+            import System.Configuration
+            content = dir(System.Configuration)
+            self.failUnless(len(content) > 10, content)
+        finally:
+            clr.preload = False
 
     def testModuleInterface(self):
         """Test the interface exposed by CLR module objects."""

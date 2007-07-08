@@ -32,7 +32,83 @@ namespace Python.Runtime {
             get { return true; }
         }
 
-        internal ExceptionClassObject(Type tp) : base(tp) {}
+        internal ExceptionClassObject(Type tp) : base(tp) {
+        }
+
+        internal static Exception ToException(IntPtr ob) {
+            CLRObject co = GetManagedObject(ob) as CLRObject;
+            if (co == null) {
+                return null;
+            }
+            Exception e = co.inst as Exception;
+            if (e == null) {
+                return null;
+            }
+            return e;
+        }
+
+        //====================================================================
+        // Exception __str__ implementation
+        //====================================================================
+        
+        public new static IntPtr tp_str(IntPtr ob) {
+            Exception e = ToException(ob);
+            if (e == null) {
+                return Exceptions.RaiseTypeError("invalid object");
+            }
+
+            string message = String.Empty;
+            if (e.Message != String.Empty) {
+                message = e.Message;
+            }
+            if ((e.StackTrace != null) && (e.StackTrace != String.Empty)) {
+                message = message + "\n" + e.StackTrace;
+            }
+            return Runtime.PyUnicode_FromString(message);
+        }
+
+        //====================================================================
+        // Exception __repr__ implementation.
+        //====================================================================
+
+        public static IntPtr tp_repr(IntPtr ob) {
+            Exception e = ToException(ob);
+            if (e == null) {
+                return Exceptions.RaiseTypeError("invalid object");
+            }
+            string name = e.GetType().Name;
+            string message;
+            if (e.Message != String.Empty) {
+                message = String.Format("{0}('{1}',)", name, e.Message);
+            } else {
+                message = String.Format("{0}()", name);
+            }
+            return Runtime.PyUnicode_FromString(message);
+        }
+        //====================================================================
+        // Exceptions __getattribute__ implementation. 
+        // handles Python's args and message attributes
+        //====================================================================
+
+        public static IntPtr tp_getattro(IntPtr ob, IntPtr key)
+        {
+            if (!Runtime.PyString_Check(key)) {
+                Exceptions.SetError(Exceptions.TypeError, "string expected");
+                return IntPtr.Zero;
+            }
+
+            string name = Runtime.GetManagedString(key);
+            if (name == "args") {
+                IntPtr args = Runtime.PyTuple_New(0);
+                return args;
+            }
+
+            if (name == "message") {
+                return ExceptionClassObject.tp_str(ob);
+            }
+
+            return Runtime.PyObject_GenericGetAttr(ob, key);
+        }
     }
 
     /// <summary>
@@ -256,7 +332,6 @@ namespace Python.Runtime {
 	    return c;
 	}
 
-
 	/// <summary>
 	/// GetException Method
 	/// </summary>
@@ -398,23 +473,27 @@ namespace Python.Runtime {
             Exceptions.ErrorCheck(excMod);
             IntPtr excClass = Runtime.PyObject_GetAttrString(excMod, exceptionName);
             Exceptions.ErrorCheck(excClass);
-            Runtime.Decref(excMod);
 
             IntPtr warningsMod = Runtime.PyImport_ImportModule("warnings");
             Exceptions.ErrorCheck(warningsMod);
             IntPtr warnFunc = Runtime.PyObject_GetAttrString(warningsMod, "warn");
             Exceptions.ErrorCheck(warnFunc);
-            Runtime.Decref(warningsMod);
 
             IntPtr args = Runtime.PyTuple_New(3);
-            Exceptions.ErrorCheck(args);
-            Runtime.PyTuple_SetItem(args, 0, Runtime.PyString_FromString(message));
+            IntPtr msg = Runtime.PyString_FromString(message);
+            IntPtr level = Runtime.PyInt_FromInt32(stacklevel);
+            Runtime.PyTuple_SetItem(args, 0, msg);
             Runtime.PyTuple_SetItem(args, 1, excClass);
-            Runtime.PyTuple_SetItem(args, 2, Runtime.PyInt_FromInt32(stacklevel));
+            Runtime.PyTuple_SetItem(args, 2, level);
             IntPtr result = Runtime.PyObject_Call(warnFunc, args, IntPtr.Zero);
             Exceptions.ErrorCheck(result);
+
             Runtime.Decref(warnFunc);
+            Runtime.Decref(warningsMod);
+            Runtime.Decref(msg);
             Runtime.Decref(excClass);
+            Runtime.Decref(excMod);
+            Runtime.Decref(level);
             Runtime.Decref(args);
             Runtime.Decref(result);
         }

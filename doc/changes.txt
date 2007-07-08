@@ -4,9 +4,26 @@ Python for .NET Changes
   PythonNet 2.0 alpha 2
   ---------------------------------------------------------------------------
   
-    - First work on Python 2.5 compatibility
+    - First work on Python 2.5 compatibility. The destination version can be
+      set by defining PYTHON24 or PYTHON25. Python 2.6 compatibility is in
+      work.
     
-    - Added VS 2005 solution and project files
+    - Added VS 2005 solution and project files including a UnitTest
+      configuration which runs the unit test suite.
+      
+    - Enhanced unit test suite. All test cases are combined in a single
+      test suite now.
+    
+    - Fixed bugs in generics support for all Python versions.
+    
+    - Fixed exception bugs for Python 2.5+. When compiled for Python 2.5+ all
+      managed exceptions are based on Python's exceptions.Exception class.
+      
+    - Implemented a preload switch. Automatic preloading can be enabled by
+      setting clr.preload to true. Preloading is automatically enabled for
+      interactive Python shells and disabled in all other cases.
+      
+    - Added deprecation warnings for importing from CLR.* and the CLR module.
 
   PythonNet 2.0 alpha 1
   ---------------------------------------------------------------------------

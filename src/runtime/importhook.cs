@@ -22,7 +22,6 @@ namespace Python.Runtime {
 	static IntPtr py_import;
 	static CLRModule root;
 	static MethodWrapper hook;
-	static int preload;
 
 	//===================================================================
 	// Initialization performed on startup of the Python runtime.
@@ -47,7 +46,6 @@ namespace Python.Runtime {
             Runtime.Incref(root.pyHandle); // we are using the module two times
 	    Runtime.PyDict_SetItemString(dict, "CLR", root.pyHandle);
             Runtime.PyDict_SetItemString(dict, "clr", root.pyHandle);
-	    preload = -1;
 	}
 
 
@@ -162,19 +160,13 @@ namespace Python.Runtime {
 	    // each module, which is often useful for introspection. If we
 	    // are not interactive, we stick to just-in-time creation of
 	    // objects at lookup time, which is much more efficient.
-
-	    if (preload < 0) {
-		if (Runtime.PySys_GetObject("ps1") != IntPtr.Zero) {
-		    preload = 1;
-		}
-		else {
-		    Exceptions.Clear();
-		    preload = 0;
-		}
-	    }
+            // NEW: The clr got a new module variable preload. You can
+            // enable preloading in a non-interactive python processing by
+            // setting clr.preload = True
 
 	    ModuleObject head = (mod_name == realname) ? null : root;
 	    ModuleObject tail = root;
+            bool preload = root.preload;
 
 	    for (int i = 0; i < names.Length; i++) {
 		string name = names[i];
@@ -188,7 +180,7 @@ namespace Python.Runtime {
 		    head = (ModuleObject)mt;
 		}
 		tail = (ModuleObject) mt;
-		if (preload == 1) {
+		if (preload) {
 		    tail.LoadNames();
 		}
 		Runtime.PyDict_SetItemString(modules, tail.moduleName, 
@@ -200,7 +192,7 @@ namespace Python.Runtime {
 
 	    if (fromlist && Runtime.PySequence_Size(fromList) == 1) {
 		IntPtr fp = Runtime.PySequence_GetItem(fromList, 0);
-		if ((preload < 1) && Runtime.GetManagedString(fp) == "*") {
+		if ((!preload) && Runtime.GetManagedString(fp) == "*") {
 		    mod.LoadNames();
 		}
 		Runtime.Decref(fp);

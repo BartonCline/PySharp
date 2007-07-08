@@ -295,7 +295,6 @@ class ExceptionTests(unittest.TestCase):
         """Test the str() representation of an exception."""
         from System import NullReferenceException
         from System import Convert, FormatException
-        
         e = NullReferenceException('')
         self.failUnlessEqual(str(e), '')
 
@@ -308,6 +307,22 @@ class ExceptionTests(unittest.TestCase):
             msg = unicode(e).encode("utf8") # fix for international installation
             self.failUnless(msg.find('System.DateTime.Parse(') > -1)
 
+            
+    def testPythonCompatOfManagedExceptions(self):
+        """Test if managed exceptions are compatible with Python's implementation
+        """
+        from System import OverflowException
+        msg = "A simple message"
+        
+        e = OverflowException(msg)
+        self.failUnlessEqual(e.message, msg)
+        self.failUnless(isinstance(e.message, unicode)) # ???
+        self.failUnlessEqual(str(e), msg)
+        self.failUnlessEqual(unicode(e), msg)
+        
+        self.failUnlessEqual(e.args, ())
+        self.failUnless(isinstance(e.args, tuple))
+        self.failUnlessEqual(repr(e), "OverflowException('A simple message',)")
 
     def testExceptionIsInstanceOfSystemObject(self):
         """Test behavior of isinstance(<managed exception>, System.Object)."""

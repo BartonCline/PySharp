@@ -255,9 +255,43 @@ namespace Python.Runtime {
     internal class CLRModule : ModuleObject
     {
         protected static bool hacked = false;
+        protected static bool interactive_preload = true;
+        public bool preload {
+            get {
+                IntPtr pybool = Runtime.PyDict_GetItemString(dict, "preload");
+                if (pybool == IntPtr.Zero) {
+                    Exceptions.Clear();
+                    return false;
+                }
+                return (Runtime.PyObject_IsTrue(pybool) == 1);
+            }
+            set {
+                IntPtr pybool;
+                if (value) {
+                    pybool = Runtime.PyTrue;
+                } else {
+                    pybool = Runtime.PyFalse;
+                }
+                IntPtr oldval = Runtime.PyDict_GetItemString(dict, "preload");
+                Runtime.Decref(oldval);
+                Runtime.Incref(pybool);
+                Runtime.PyDict_SetItemString(dict, "preload", pybool);
+            }
+
+        }
+
         public CLRModule() : base("clr") {
             _namespace = String.Empty;
-
+            preload = false;
+            if (interactive_preload) {
+                if (Runtime.PySys_GetObject("ps1") != IntPtr.Zero) {
+                    preload = true;
+                } else {
+                    Exceptions.Clear();
+                    preload = false;
+                }
+            }
+            
             // This hackery is required in order to allow a plain Python to
             // import the managed runtime via the CLR bootstrapper module. 
             // The standard Python machinery in control at the time of the
@@ -270,6 +304,32 @@ namespace Python.Runtime {
                 Marshal.WriteIntPtr(type, TypeOffset.tp_mro, ext);
                 Runtime.Decref(mro);
                 hacked = true;
+            }
+        }
+
+        //====================================================================
+        // Type __setattr__ implementation.
+        //====================================================================
+        public static new int tp_setattro(IntPtr ob, IntPtr key, IntPtr val)
+        {
+            string name = Runtime.GetManagedString(key);
+            if (name != "preload") {
+                return ExtensionType.tp_setattro(ob, key, val);
+            } else {
+                IntPtr dict = Runtime.PyModule_GetDict(ob);
+                Exceptions.ErrorCheck(dict);
+                
+                IntPtr oldval = Runtime.PyDict_GetItemString(dict, "preload");
+                Runtime.Decref(oldval);
+
+                IntPtr newval;
+                if ((val != IntPtr.Zero) && (Runtime.PyObject_IsTrue(val) == 1)) {
+                    newval = Runtime.PyTrue;
+                } else {
+                    newval = Runtime.PyFalse;
+                }
+                Runtime.PyDict_SetItemString(dict, "preload", newval);
+                return 0;
             }
         }
     }
