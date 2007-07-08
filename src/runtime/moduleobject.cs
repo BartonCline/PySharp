@@ -162,9 +162,9 @@ namespace Python.Runtime {
 		if (m == null) {
 		    ManagedType attr = this.GetAttribute(name, true);
 		    if (Runtime.wrap_exceptions) {
-			if (attr is ClassBase) {
-			    ClassBase c = attr as ClassBase;
-			    if (c.is_exception) {
+			if (attr is ExceptionClassObject) {
+                            ExceptionClassObject c = attr as ExceptionClassObject;
+			    if (c != null) {
 			      IntPtr p = attr.pyHandle;
 			      IntPtr r =Exceptions.GetExceptionClassWrapper(p);
 			      Runtime.PyDict_SetItemString(dict, name, r);
@@ -217,9 +217,9 @@ namespace Python.Runtime {
 	    // of Python where new-style classes cannot be used as exceptions.
 
 	    if (Runtime.wrap_exceptions) {
-		if (attr is ClassBase) {
-		    ClassBase c = attr as ClassBase;
-		    if (c.is_exception) {
+		if (attr is ExceptionClassObject) {
+                    ExceptionClassObject c = attr as ExceptionClassObject;
+		    if (c != null) {
 			IntPtr p = attr.pyHandle;
 			IntPtr r = Exceptions.GetExceptionClassWrapper(p);
 			Runtime.PyDict_SetItemString(self.dict, name, r);

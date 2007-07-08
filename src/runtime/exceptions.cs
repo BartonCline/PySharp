@@ -28,13 +28,10 @@ namespace Python.Runtime {
     /// </remarks>
     internal class ExceptionClassObject : ClassObject {
 
-        internal new bool is_exception {
-            get { return true; }
-        }
-
         internal ExceptionClassObject(Type tp) : base(tp) {
         }
 
+#if (PYTHON25 || PYTHON26)
         internal static Exception ToException(IntPtr ob) {
             CLRObject co = GetManagedObject(ob) as CLRObject;
             if (co == null) {
@@ -99,7 +96,15 @@ namespace Python.Runtime {
 
             string name = Runtime.GetManagedString(key);
             if (name == "args") {
-                IntPtr args = Runtime.PyTuple_New(0);
+                Exception e = ToException(ob);
+                IntPtr args;
+                if (e.Message != String.Empty) {
+                    args = Runtime.PyTuple_New(1);
+                    IntPtr msg = Runtime.PyUnicode_FromString(e.Message);
+                    Runtime.PyTuple_SetItem(args, 0, msg);
+                } else {
+                    args = Runtime.PyTuple_New(0);
+                }
                 return args;
             }
 
@@ -109,6 +114,7 @@ namespace Python.Runtime {
 
             return Runtime.PyObject_GenericGetAttr(ob, key);
         }
+#endif
     }
 
     /// <summary>
@@ -198,7 +204,11 @@ namespace Python.Runtime {
             "class Exception(exceptions.Exception):\n" +
             "    _class = None\n" +
 	    "    _inner = None\n" +
-            "\n" +
+            "    \n" +
+            "    @property\n" +
+            "    def message(self):\n" +
+            "        return self.Message\n" +
+            "    \n" +
             "    def __init__(self, *args, **kw):\n" +
             "        inst = self.__class__._class(*args, **kw)\n" +
             "        self.__dict__['_inner'] = inst\n" +
@@ -224,6 +234,12 @@ namespace Python.Runtime {
             "        st = getattr(inner, 'StackTrace', '')\n" +
             "        st = st and '\\n' + st or ''\n" +
             "        return msg + st\n" +
+            "    \n" + 
+            "    def __repr__(self):\n" +
+            "        inner = self.__dict__.get('_inner')\n" +
+            "        msg = getattr(inner, 'Message', '')\n" +
+            "        name = self.__class__.__name__\n" +
+            "        return '%s(\\'%s\\',)' % (name, msg) \n" +
             "\n";
 
 	    IntPtr dict = Runtime.PyDict_New();
@@ -535,10 +551,14 @@ namespace Python.Runtime {
 	public static IntPtr Exception;
 	public static IntPtr FloatingPointError;
         public static IntPtr FutureWarning;
+#if (PYTHON25 || PYTHON26)
         public static IntPtr GeneratorExit;
+#endif
 	public static IntPtr IOError;
 	public static IntPtr ImportError;
+#if (PYTHON25 || PYTHON26)
         public static IntPtr ImportWarning;
+#endif
 	public static IntPtr IndentationError;
 	public static IntPtr IndexError;
 	public static IntPtr KeyError;
@@ -567,7 +587,9 @@ namespace Python.Runtime {
         public static IntPtr UnicodeEncodeError;
 	public static IntPtr UnicodeError;
         public static IntPtr UnicodeTranslateError;
+#if (PYTHON25 || PYTHON26)
         public static IntPtr UnicodeWarning;
+#endif
 	public static IntPtr UserWarning;
 	public static IntPtr ValueError;
 	public static IntPtr Warning;

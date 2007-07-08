@@ -320,7 +320,7 @@ class ExceptionTests(unittest.TestCase):
         self.failUnlessEqual(str(e), msg)
         self.failUnlessEqual(unicode(e), msg)
         
-        self.failUnlessEqual(e.args, ())
+        self.failUnlessEqual(e.args, (msg,))
         self.failUnless(isinstance(e.args, tuple))
         self.failUnlessEqual(repr(e), "OverflowException('A simple message',)")
 
