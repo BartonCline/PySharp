@@ -480,53 +480,39 @@ namespace Python.Runtime {
         //====================================================================
 
         /// <summary>
-        /// XXX This method is buggy! It causes an access violation.
+        /// Alias for Python's warnings.warn() function.
         /// </summary>
-        public static void warn(string message, string exceptionName, int stacklevel)
+        public static IntPtr warn(string message, IntPtr exception, int stacklevel)
         {
-            return; // XXX
-            IntPtr excMod = Runtime.PyImport_ImportModule("exceptions");
-            Exceptions.ErrorCheck(excMod);
-            IntPtr excClass = Runtime.PyObject_GetAttrString(excMod, exceptionName);
-            Exceptions.ErrorCheck(excClass);
+            if ((exception == null) ||
+                (Runtime.PyObject_IsSubclass(exception, Exceptions.Warning) != 1)) {
+                    return Exceptions.RaiseTypeError("Invalid exception");
+            }
 
-            IntPtr warningsMod = Runtime.PyImport_ImportModule("warnings");
-            Exceptions.ErrorCheck(warningsMod);
-            IntPtr warnFunc = Runtime.PyObject_GetAttrString(warningsMod, "warn");
-            Exceptions.ErrorCheck(warnFunc);
-
-            IntPtr args = Runtime.PyTuple_New(3);
-            IntPtr msg = Runtime.PyString_FromString(message);
-            IntPtr level = Runtime.PyInt_FromInt32(stacklevel);
-            Runtime.PyTuple_SetItem(args, 0, msg);
-            Runtime.PyTuple_SetItem(args, 1, excClass);
-            Runtime.PyTuple_SetItem(args, 2, level);
-            IntPtr result = Runtime.PyObject_Call(warnFunc, args, IntPtr.Zero);
-            Exceptions.ErrorCheck(result);
-
-            Runtime.Decref(warnFunc);
-            Runtime.Decref(warningsMod);
-            Runtime.Decref(msg);
-            Runtime.Decref(excClass);
-            Runtime.Decref(excMod);
-            Runtime.Decref(level);
-            Runtime.Decref(args);
-            Runtime.Decref(result);
+            PyObject warnings = PythonEngine.ImportModule("warnings");
+            if (warnings == null) {
+                Exceptions.SetError(Exceptions.ImportError, "No module named warnings");
+                return IntPtr.Zero;
+            }
+            PyObject result = warnings.InvokeMethod("warn", 
+                new PyString(message), new PyObject(exception),
+                new PyInt(1));
+            return result.Handle;
         }
 
-        public static void warn(string message, string exceptionName)
+        public static IntPtr warn(string message, IntPtr exception)
         {
-            warn(message, exceptionName, 1);
+            return warn(message, exception, 1);
         }
 
-        public static void deprecation(string message, int stacklevel)
+        public static IntPtr deprecation(string message, int stacklevel)
         {
-            warn(message, "DeprecationWarning", stacklevel);
+            return warn(message, Exceptions.DeprecationWarning, stacklevel);
         }
 
-        public static void deprecation(string message)
+        public static IntPtr deprecation(string message)
         {
-            deprecation(message, 1);
+            return deprecation(message, 1);
         }
 
 	//====================================================================
@@ -569,7 +555,6 @@ namespace Python.Runtime {
 	public static IntPtr NotImplementedError;
 	public static IntPtr OSError;
 	public static IntPtr OverflowError;
-        //public static IntPtr OverflowWarning;
         public static IntPtr PendingDeprecationWarning;
 	public static IntPtr ReferenceError;
 	public static IntPtr RuntimeError;
