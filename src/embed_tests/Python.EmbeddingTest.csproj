@@ -7,6 +7,7 @@
     <NoStandardLibraries>false</NoStandardLibraries>
     <AssemblyName>Python.EmbeddingTest</AssemblyName>
     <RootNamespace>Python.Runtime</RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -57,4 +58,8 @@
   <ProjectExtensions>
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
+  <PropertyGroup>
+    <PostBuildEvent>copy "$(TargetDir)*.pdb" ..\..\..\..\
+copy "$(TargetDir)Python.EmbeddingTest.dll" ..\..\..\..\</PostBuildEvent>
+  </PropertyGroup>
 </Project>

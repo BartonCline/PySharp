@@ -9,6 +9,7 @@
     <RootNamespace>Python.Runtime</RootNamespace>
     <StartupObject>
     </StartupObject>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -59,10 +60,11 @@
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
   <PropertyGroup>
-    <PostBuildEvent>ilasm /nologo /dll /quiet /output="$(TargetDir)clr.pyd" "$(ProjectDir)..\runtime\clrmodule.il"
+    <PostBuildEvent>%25windir%25\Microsoft.NET\Framework\v2.0.50727\ilasm /nologo /dll /quiet /output="$(TargetDir)clr.pyd" "$(ProjectDir)..\runtime\clrmodule.il"
 copy "$(TargetDir)Python.Runtime.dll" ..\..\..\..\
 copy "$(TargetDir)python.exe" ..\..\..\..\
-copy "$(TargetDir)clr.pyd" ..\..\..\..\
-copy "$(TargetDir)*.pdb" ..\..\..\..\</PostBuildEvent>
+copy "$(TargetDir)*.pdb" ..\..\..\..\
+copy "$(TargetDir)clr.pyd" ..\..\..\..\</PostBuildEvent>
+    <PreBuildEvent>del "$(TargetDir)clr.pyd"</PreBuildEvent>
   </PropertyGroup>
 </Project>

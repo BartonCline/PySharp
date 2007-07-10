@@ -7,6 +7,7 @@
     <NoStandardLibraries>false</NoStandardLibraries>
     <AssemblyName>Python.Test</AssemblyName>
     <RootNamespace>Python.Test</RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -68,7 +69,7 @@
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetDir)Python.Test.dll" ..\..\..\..\
-copy "$(TargetDir)*.pdb" ..\..\..\..\</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetDir)*.pdb" ..\..\..\..\
+copy "$(TargetDir)Python.Test.dll" ..\..\..\..\</PostBuildEvent>
   </PropertyGroup>
 </Project>

@@ -7,13 +7,14 @@
     <NoStandardLibraries>false</NoStandardLibraries>
     <AssemblyName>Python.Runtime</AssemblyName>
     <RootNamespace>Python.Runtime</RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>.\bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;PYTHON25</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;PYTHON24</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -107,7 +108,8 @@
     <VisualStudio AllowExistingFolder="true" />
   </ProjectExtensions>
   <PropertyGroup>
-    <PostBuildEvent>ilasm /nologo /dll /quiet /output="$(TargetDir)clr.pyd" "$(ProjectDir)clrmodule.il"
+    <PostBuildEvent>%25windir%25\Microsoft.NET\Framework\v2.0.50727\ilasm /nologo /dll /quiet /output="$(TargetDir)clr.pyd" "$(ProjectDir)clrmodule.il"
 </PostBuildEvent>
+    <PreBuildEvent>del "$(TargetDir)clr.pyd"</PreBuildEvent>
   </PropertyGroup>
 </Project>
