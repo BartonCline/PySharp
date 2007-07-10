@@ -168,7 +168,7 @@ namespace Python.Runtime {
 			      MethodBase info) {
 	    // loop to find match, return invoker w/ or /wo error
 	    MethodBase[] _methods = null;
-	    int nargs = Runtime.PyTuple_Size(args);
+	    int pynargs = Runtime.PyTuple_Size(args);
 	    object arg;
 
  	    if (info != null) {
@@ -184,20 +184,35 @@ namespace Python.Runtime {
 	    for (int i = 0; i < _methods.Length; i++) {
 		MethodBase mi = _methods[i];
 		ParameterInfo[] pi = mi.GetParameters();
-		int count = pi.Length;
+		int clrnargs = pi.Length;
+                bool match = false;
+                int arrayStart = -1;
 		int outs = 0;
 
-		
-//  		if ((nargs > count) && (pi[count].ParameterType.IsArray)) {
-//  		    // See if we can map to a params signature
+                if (pynargs == clrnargs) { 
+                    match = true; 
+                } else if ((pynargs > clrnargs) && (clrnargs > 0) &&
+                           (pi[clrnargs-1].ParameterType.IsArray)) {
+                    // The last argument of the mananged functions seems to
+                    // accept multiple arguments as a array. Hopefully it's a
+                    // spam(params object[] egg) style method
+                    match = true;
+                    arrayStart = clrnargs - 1;
+                }
 
-//  		}
+                if (match) {
+		    Object[] margs = new Object[clrnargs];
 
-		if ( nargs == count ) {
-		    Object[] margs = new Object[count];
-
-		    for (int n = 0; n < count; n++) {
-			IntPtr op = Runtime.PyTuple_GetItem(args, n);
+		    for (int n = 0; n < clrnargs; n++) {
+                        IntPtr op;
+                        if (arrayStart == n) {
+                            // map remaining Python arguments to a tuple since
+                            // the managed function accepts it - hopefully :]
+                            op = Runtime.PyTuple_GetSlice(args, arrayStart, pynargs);
+                        }
+                        else {
+                            op = Runtime.PyTuple_GetItem(args, n);
+                        }
 			Type type = pi[n].ParameterType;
 			if (pi[n].IsOut || type.IsByRef) {
 			    outs++;
@@ -208,6 +223,11 @@ namespace Python.Runtime {
 			    margs = null;
 			    break;
 			}
+                        if (arrayStart == n) {
+                            // GetSlice() creates a new reference but GetItem()
+                            // returns only a borrow reference.
+                            Runtime.Decref(op);
+                        }
 			margs[n] = arg;
 		    }
 		    

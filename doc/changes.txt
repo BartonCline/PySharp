@@ -24,6 +24,9 @@ Python for .NET Changes
       interactive Python shells and disabled in all other cases.
       
     - Added deprecation warnings for importing from CLR.* and the CLR module.
+    
+    - Implemented support for methods with variable arguments 
+      spam(params object[] egg)
 
   PythonNet 2.0 alpha 1
   ---------------------------------------------------------------------------
