@@ -102,11 +102,13 @@ namespace Python.Runtime {
 	    if (mod_name == "CLR") {
                 Exceptions.deprecation("The CLR module is deprecated. " +
                     "Please use 'clr'.");
+                root.InitializePreload();
 		Runtime.Incref(root.pyHandle);
 		return root.pyHandle;
 	    }
 
 	    if (mod_name == "clr") {
+                root.InitializePreload();
 		Runtime.Incref(root.pyHandle);
 		return root.pyHandle;
 	    }
@@ -166,6 +168,7 @@ namespace Python.Runtime {
 
 	    ModuleObject head = (mod_name == realname) ? null : root;
 	    ModuleObject tail = root;
+            root.InitializePreload();
             bool preload = root.preload;
 
 	    for (int i = 0; i < names.Length; i++) {

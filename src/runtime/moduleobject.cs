@@ -282,15 +282,6 @@ namespace Python.Runtime {
 
         public CLRModule() : base("clr") {
             _namespace = String.Empty;
-            preload = false;
-            if (interactive_preload) {
-                if (Runtime.PySys_GetObject("ps1") != IntPtr.Zero) {
-                    preload = true;
-                } else {
-                    Exceptions.Clear();
-                    preload = false;
-                }
-            }
             
             // This hackery is required in order to allow a plain Python to
             // import the managed runtime via the CLR bootstrapper module. 
@@ -304,6 +295,23 @@ namespace Python.Runtime {
                 Marshal.WriteIntPtr(type, TypeOffset.tp_mro, ext);
                 Runtime.Decref(mro);
                 hacked = true;
+            }
+        }
+
+        /// <summary>
+        /// The initializing of the preload hook has to happen as late as
+        /// possible since sys.ps1 is created after the CLR module is 
+        /// created.
+        /// </summary>
+        internal void InitializePreload() {
+            if (interactive_preload) {
+                interactive_preload = false;
+                if (Runtime.PySys_GetObject("ps1") != IntPtr.Zero) {
+                    preload = true;
+                } else {
+                    Exceptions.Clear();
+                    preload = false;
+                }
             }
         }
 
