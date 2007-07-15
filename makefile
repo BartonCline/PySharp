@@ -9,6 +9,9 @@ CSC=csc.exe
 #PYTHONVER=PYTHON24
 PYTHONVER=PYTHON25
 #PYTHONVER=PYTHON26
+# unicode width
+UCS=UCS2
+#UCS=UCS4
 
 all: python.exe clr.pyd Python.Test.dll
 
@@ -16,14 +19,14 @@ cleanall: clean all
 
 python.exe: Python.Runtime.dll
 	cd src; cd console; \
-	$(CSC) /define:$(PYTHONVER)  /nologo /target:exe /out:../../python.exe \
+	$(CSC) /define:$(PYTHONVER),$(UCS) /nologo /target:exe /out:../../python.exe \
         /reference:../../Python.Runtime.dll /recurse:*.cs
 	cd ..; cd ..;
 
 
 Python.Runtime.dll:
 	cd src; cd runtime; \
-	$(CSC) /define:$(PYTHONVER) /nologo /unsafe /target:library \
+	$(CSC) /define:$(PYTHONVER),$(UCS) /nologo /unsafe /target:library \
         /out:../../Python.Runtime.dll /recurse:*.cs
 	cd ..; cd ..;
 
@@ -35,9 +38,10 @@ clr.pyd: Python.Runtime.dll
 
 Python.Test.dll: Python.Runtime.dll
 	cd src; cd testing; \
-	$(CSC) /define:$(PYTHONVER)  /nologo /target:library \
-        /out:../../Python.Test.dll /reference:../../Python.Runtime.dll \
-	    /recurse:*.cs
+	$(CSC) /define:$(PYTHONVER),$(UCS) /nologo /target:library \
+	/out:../../Python.Test.dll \
+	/reference:../../Python.Runtime.dll,System.Windows.Forms.dll \
+	/recurse:*.cs
 	cd ..; cd ..;
 
 

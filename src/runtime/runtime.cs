@@ -943,11 +943,11 @@ namespace Python.Runtime {
     internal unsafe static extern int
     PyString_Size(IntPtr pointer);
 
-
     internal static bool PyUnicode_Check(IntPtr ob) {
         return PyObject_TYPE(ob) == Runtime.PyUnicodeType;
     }
 
+#if (!UCS4)
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            EntryPoint="PyUnicodeUCS2_FromObject",
            ExactSpelling=true, CharSet=CharSet.Unicode)]
@@ -965,10 +965,6 @@ namespace Python.Runtime {
            ExactSpelling=true, CharSet=CharSet.Unicode)]
     internal unsafe static extern IntPtr
     PyUnicode_FromUnicode(string s, int size);
-
-    internal static IntPtr PyUnicode_FromString(string s) {
-        return PyUnicode_FromUnicode(s, (s.Length));
-    }
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            EntryPoint="PyUnicodeUCS2_GetSize",
@@ -993,6 +989,55 @@ namespace Python.Runtime {
            ExactSpelling=true, CharSet=CharSet.Unicode)]
     internal unsafe static extern IntPtr 
     PyUnicode_FromOrdinal(int c);
+#endif
+#if (UCS4)
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+           EntryPoint = "PyUnicodeUCS4_FromObject",
+           ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromObject(IntPtr ob);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+           EntryPoint = "PyUnicodeUCS4_FromEncodedObject",
+           ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromEncodedObject(IntPtr ob, IntPtr enc, IntPtr err);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+           EntryPoint = "PyUnicodeUCS4_FromUnicode",
+           ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromUnicode(string s, int size);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+           EntryPoint = "PyUnicodeUCS4_GetSize",
+           ExactSpelling = true, CharSet = CharSet.Ansi)]
+    internal unsafe static extern int
+    PyUnicode_GetSize(IntPtr ob);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+           EntryPoint = "PyUnicodeUCS4_AsUnicode",
+           ExactSpelling = true)]
+    internal unsafe static extern char*
+    PyUnicode_AsUnicode(IntPtr ob);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+           EntryPoint = "PyUnicodeUCS4_AsUnicode",
+           ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_AS_UNICODE(IntPtr op);
+
+    [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
+           EntryPoint = "PyUnicodeUCS4_FromOrdinal",
+           ExactSpelling = true, CharSet = CharSet.Unicode)]
+    internal unsafe static extern IntPtr
+    PyUnicode_FromOrdinal(int c);
+#endif
+
+        internal static IntPtr PyUnicode_FromString(string s)
+        {
+            return PyUnicode_FromUnicode(s, (s.Length));
+        }
 
     internal unsafe static string GetManagedString(IntPtr op) {
         IntPtr type = PyObject_TYPE(op);

@@ -484,7 +484,7 @@ namespace Python.Runtime {
         /// </summary>
         public static IntPtr warn(string message, IntPtr exception, int stacklevel)
         {
-            if ((exception == null) ||
+            if ((exception == IntPtr.Zero) ||
                 (Runtime.PyObject_IsSubclass(exception, Exceptions.Warning) != 1)) {
                     return Exceptions.RaiseTypeError("Invalid exception");
             }
