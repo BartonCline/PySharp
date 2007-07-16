@@ -1,15 +1,28 @@
 #include <mono/jit/jit.h>
 #include <mono/metadata/environment.h>
 #include <mono/metadata/mono-config.h>
+#include <mono/metadata/debug-helpers.h>
+#include <mono/metadata/assembly.h>
 #include <Python.h>
 
 #define MONO_VERSION "v2.0.50727"
 #define MONO_DOMAIN "Python.Runtime"
 #define PR_ASSEMBLY "Python.Runtime.dll"
 
-void InitializePythonNet(void) {
+int error(char *msg) {
+    // set python exception
+    printf(msg);
+    return -1;
+}
+
+int InitializePythonNet(void) {
     MonoDomain *domain;
     MonoAssembly *pyruntime;
+    MonoMethod *initext;
+    MonoMethodDesc *initext_desc;
+    MonoImage *pr_image;
+    MonoClass *pythonengine;
+    MonoObject *exception = NULL;
 
     /*
      * Load the default Mono configuration file, this is needed
@@ -21,12 +34,27 @@ void InitializePythonNet(void) {
     domain = mono_jit_init_version(MONO_DOMAIN, MONO_VERSION);
 
     pyruntime = mono_domain_assembly_open(domain, PR_ASSEMBLY);
-    if (!pyruntime) {
-        // XXX
-        printf("Unable to load assembly");
-    }
-    // XXX more
+    if (!pyruntime)
+        return error("Unable to load assembly");
+ 
+    pr_image = mono_assembly_get_image(pyruntime);
+    if (!pr_image) 
+        return error("Unable to get image");
 
+    pythonengine = mono_class_from_name(pr_image, "Python.Runtime", "PythonEngine");
+    if (!pythonengine)
+        return error("Unable to load class PythonEngine from Python.Runtime");
+
+    initext_desc = mono_method_desc_new("Python.Runtime:InitExt()", 1);
+ 
+    initext = mono_method_desc_search_in_class(initext_desc, pythonengine);
+    if (!initext)
+        return error("Unable to fetch InitExt() from PythonEngine");
+
+    mono_runtime_invoke(initext, NULL, NULL, &exception); 
+    
+    // XXX more
+    return 0;
 } 
 
 /* List of functions defined in the module */
@@ -50,6 +78,8 @@ initclr(void)
         PyModule_AddObject(m, "fascade", Py_True);
         Py_INCREF(Py_True);
 
-        InitializePythonNet();
+        if (InitializePythonNet() != 0) 
+                return;
+        
 }
 

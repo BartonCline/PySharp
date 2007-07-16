@@ -10,6 +10,10 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Security;
+#if (UCS4)
+using System.Text;
+using Mono.Unix;
+#endif
 
 namespace Python.Runtime {
 
@@ -989,6 +993,34 @@ namespace Python.Runtime {
            ExactSpelling=true, CharSet=CharSet.Unicode)]
     internal unsafe static extern IntPtr 
     PyUnicode_FromOrdinal(int c);
+
+    internal static IntPtr PyUnicode_FromString(string s)
+    {
+        return PyUnicode_FromUnicode(s, (s.Length));
+    }
+
+    internal unsafe static string GetManagedString(IntPtr op)
+    {
+        IntPtr type = PyObject_TYPE(op);
+
+        if (type == Runtime.PyStringType)
+        {
+            return Marshal.PtrToStringAnsi(
+                       PyString_AS_STRING(op),
+                       Runtime.PyString_Size(op)
+                       );
+        }
+
+        if (type == Runtime.PyUnicodeType)
+        {
+            char* p = Runtime.PyUnicode_AsUnicode(op);
+            int size = Runtime.PyUnicode_GetSize(op);
+            return new String(p, 0, size);
+        }
+
+        return null;
+    }
+
 #endif
 #if (UCS4)
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
@@ -1021,7 +1053,7 @@ namespace Python.Runtime {
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
            EntryPoint = "PyUnicodeUCS4_AsUnicode",
            ExactSpelling = true)]
-    internal unsafe static extern char*
+    internal unsafe static extern IntPtr
     PyUnicode_AsUnicode(IntPtr ob);
 
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
@@ -1035,32 +1067,33 @@ namespace Python.Runtime {
            ExactSpelling = true, CharSet = CharSet.Unicode)]
     internal unsafe static extern IntPtr
     PyUnicode_FromOrdinal(int c);
-#endif
 
-        internal static IntPtr PyUnicode_FromString(string s)
-        {
-            return PyUnicode_FromUnicode(s, (s.Length));
-        }
+    internal static IntPtr PyUnicode_FromString(string s)
+    {
+        return PyUnicode_FromUnicode(s, (s.Length));
+    }
 
-    internal unsafe static string GetManagedString(IntPtr op) {
+    internal unsafe static string GetManagedString(IntPtr op)
+    {
         IntPtr type = PyObject_TYPE(op);
 
-        if (type == Runtime.PyStringType) {
-        return Marshal.PtrToStringAnsi(
-                   PyString_AS_STRING(op), 
-                   Runtime.PyString_Size(op)
-                   );
+        if (type == Runtime.PyStringType)
+        {
+            return Marshal.PtrToStringAnsi(
+                       PyString_AS_STRING(op),
+                       Runtime.PyString_Size(op)
+                       );
         }
 
-        if (type == Runtime.PyUnicodeType) {
-        char *p = Runtime.PyUnicode_AsUnicode(op);
-        int size = Runtime.PyUnicode_GetSize(op);
-        return new String(p, 0, size);
+        if (type == Runtime.PyUnicodeType)
+        {
+            IntPtr p = Runtime.PyUnicode_AsUnicode(op);
+            return UnixMarshal.PtrToString(p, Encoding.UTF32);
         }
 
         return null;
     }
-
+#endif
 
     //====================================================================
     // Python dictionary API

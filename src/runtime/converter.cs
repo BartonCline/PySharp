@@ -445,8 +445,13 @@ namespace Python.Runtime {
 				 Runtime.PyUnicodeType)) {
 		    if (Runtime.PyUnicode_GetSize(value) == 1) {
 			op = Runtime.PyUnicode_AS_UNICODE(value);
+#if (!UCS4)
 			result = (char)Marshal.ReadInt16(op);
-			return true;
+#else
+			// XXX is this correct?
+                        result = (char)Marshal.ReadInt32(op);
+#endif
+                        return true;
 		    }
 		    goto type_error;
 		}
