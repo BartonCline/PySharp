@@ -1,5 +1,9 @@
 # Makefile for the PythonRuntime .NET assembly and tests. Thanks to
 # Camilo Uribe <kmilo@softhome.net> for contributing Mono support.
+#
+# When you are using Mono don't forget to add this line to /etc/mono/config:
+#  <dllmap dll="python25" target="/usr/lib/libpython2.5.so.1.0" os="!windows"/>
+# Thanks to angel ignacio colmenares laguado
 
 RELEASE=pythonnet-2.0-alpha2-py2.5-clr2.0-src
 RUNNER=
@@ -93,4 +97,8 @@ asm:
 	Python.Runtime.il
 
 
+ucs:
+	# system python
+	python -c "from distutils.sysconfig import get_config_var; \
+	           print 'UCS%i' % get_config_var('Py_UNICODE_SIZE')"
 

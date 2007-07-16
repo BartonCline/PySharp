@@ -1005,9 +1005,12 @@ namespace Python.Runtime {
 
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
            EntryPoint = "PyUnicodeUCS4_FromUnicode",
-           ExactSpelling = true, CharSet = CharSet.Unicode)]
+           ExactSpelling = true)]
     internal unsafe static extern IntPtr
-    PyUnicode_FromUnicode(string s, int size);
+    PyUnicode_FromUnicode(
+    [MarshalAs (UnmanagedType.CustomMarshaler, 
+         MarshalTypeRef=typeof(Utf32Marshaler))]
+    string s, int size);
 
     [DllImport(Runtime.dll, CallingConvention = CallingConvention.Cdecl,
            EntryPoint = "PyUnicodeUCS4_GetSize",
