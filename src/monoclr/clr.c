@@ -50,8 +50,10 @@ int InitializePythonNet(void) {
     initext = mono_method_desc_search_in_class(initext_desc, pythonengine);
     if (!initext)
         return error("Unable to fetch InitExt() from PythonEngine");
-
     mono_runtime_invoke(initext, NULL, NULL, &exception); 
+
+    if (exception)
+        return error("An exception was raised");
     
     // XXX more
     return 0;
@@ -63,8 +65,10 @@ static PyMethodDef clr_methods[] = {
 };
 
 PyDoc_STRVAR(clr_module_doc,
-"clr fascade module to initialize the CLR. It's later "
-"replaced by the real clr module");
+"clr facade module to initialize the CLR. It's later "
+"replaced by the real clr module. This module has a facade "
+"attribute to make it distinguishable from the real clr module."
+);
 
 PyMODINIT_FUNC
 initclr(void)
@@ -75,7 +79,7 @@ initclr(void)
         m = Py_InitModule3("clr", clr_methods, clr_module_doc);
         if (m == NULL)
                 return;
-        PyModule_AddObject(m, "fascade", Py_True);
+        PyModule_AddObject(m, "facade", Py_True);
         Py_INCREF(Py_True);
 
         if (InitializePythonNet() != 0) 

@@ -40,6 +40,10 @@ clr.pyd: Python.Runtime.dll
 	./src/runtime/clrmodule.il;
 
 
+clr.so: Python.Runtime.dll
+	python setup.py build_ext -i
+
+
 Python.Test.dll: Python.Runtime.dll
 	cd src; cd testing; \
 	$(CSC) /define:$(PYTHONVER),$(UCS) /nologo /target:library \
@@ -51,7 +55,7 @@ Python.Test.dll: Python.Runtime.dll
 
 clean:
 	rm -f python.exe Python*.dll Python*.il Python*.il2 Python*.res
-	rm -f clr.pyd
+	rm -f clr.*
 	rm -f CLR.dll
 	rm -f *.pyd
 	rm -f ./*~

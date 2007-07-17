@@ -19,7 +19,7 @@ def pkgconfig(*packages, **kw):
     return kw
 
 clr = Extension('clr',
-    ['clr.c'],
+    ['src/monoclr/clr.c'],
     **pkgconfig('mono')
     )
 
