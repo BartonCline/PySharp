@@ -33,7 +33,7 @@ namespace Python.Runtime {
 	static Type int64Type;
 	static Type flagsType;
 	static Type boolType;
-	static Type typeType;
+	//static Type typeType;
 
 	static Converter () {
 	    nfi = NumberFormatInfo.InvariantInfo;
@@ -44,7 +44,7 @@ namespace Python.Runtime {
 	    doubleType = typeof(Double);
 	    flagsType = typeof(FlagsAttribute);
 	    boolType = typeof(Boolean);
-	    typeType = typeof(Type);
+	    //typeType = typeof(Type);
 	}
 
 

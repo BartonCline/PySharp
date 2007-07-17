@@ -259,7 +259,6 @@ namespace Python.Runtime {
 
 	static ArrayList keepAlive;
 	static Hashtable pmap;
- 	static IntPtr temp;
 
 	static Interop() {
 
@@ -275,7 +274,7 @@ namespace Python.Runtime {
 	    }
 
 	    keepAlive = new ArrayList();
-	    temp = Marshal.AllocHGlobal(IntPtr.Size);
+	    Marshal.AllocHGlobal(IntPtr.Size);
 	    pmap = new Hashtable();
 
 	    pmap["tp_dealloc"] = p["DestructorFunc"];

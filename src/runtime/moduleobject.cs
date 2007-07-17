@@ -273,7 +273,9 @@ namespace Python.Runtime {
                     pybool = Runtime.PyFalse;
                 }
                 IntPtr oldval = Runtime.PyDict_GetItemString(dict, "preload");
-                Runtime.Decref(oldval);
+                if (oldval != IntPtr.Zero) {
+                    Runtime.Decref(oldval);
+                }
                 Runtime.Incref(pybool);
                 Runtime.PyDict_SetItemString(dict, "preload", pybool);
             }

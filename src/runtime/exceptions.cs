@@ -140,6 +140,7 @@ namespace Python.Runtime {
                     fi.SetValue(type, op);
                 }
                 else {
+                    fi.SetValue(type, IntPtr.Zero);
                     DebugUtil.Print("Unknown exception: " + fi.Name);
                 }
 	    }
@@ -160,7 +161,9 @@ namespace Python.Runtime {
 	    foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | 
 						    BindingFlags.Static)) {
 		IntPtr op = (IntPtr)fi.GetValue(type);
-		Runtime.Decref(op);
+                if (op != IntPtr.Zero) {
+  		    Runtime.Decref(op);
+                }
 	    }
 	}
 
@@ -255,7 +258,7 @@ namespace Python.Runtime {
 	    Runtime.PyDict_SetItemString(dict, "__doc__", Runtime.PyNone);
 
 	    IntPtr flag = Runtime.Py_file_input;
-	    IntPtr done = Runtime.PyRun_String(code, flag, dict, dict);
+	    Runtime.PyRun_String(code, flag, dict, dict);
 
 	    os_exc = Runtime.PyDict_GetItemString(dict, "Exception");
 	    Runtime.PyObject_SetAttrString(os_exc, "_class", ns_exc);
@@ -494,6 +497,7 @@ namespace Python.Runtime {
                 Exceptions.SetError(Exceptions.ImportError, "No module named warnings");
                 return IntPtr.Zero;
             }
+            Runtime.Incref(exception);
             PyObject result = warnings.InvokeMethod("warn", 
                 new PyString(message), new PyObject(exception),
                 new PyInt(1));
@@ -578,7 +582,7 @@ namespace Python.Runtime {
 	public static IntPtr UserWarning;
 	public static IntPtr ValueError;
 	public static IntPtr Warning;
-	public static IntPtr WindowsError;
+	//public static IntPtr WindowsError;
 	public static IntPtr ZeroDivisionError;
 
     }

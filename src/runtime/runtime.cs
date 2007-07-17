@@ -207,7 +207,6 @@ namespace Python.Runtime {
     internal static IntPtr ExtendTuple(IntPtr t, params IntPtr[] args) {
         int size = Runtime.PyTuple_Size(t);
         int add = args.Length;
-        int total = size + add;
         IntPtr item;
 
         IntPtr items = Runtime.PyTuple_New(size + add);
@@ -288,6 +287,9 @@ namespace Python.Runtime {
     }
 
     internal unsafe static void Decref(IntPtr op) {
+        if (op == IntPtr.Zero) {
+            DebugUtil.Print("Decref(NULL)");
+        }
         void *p = (void *)op;
         if ((void *)0 != p) {
         if (is32bit) { --(*(int *)p);  }
