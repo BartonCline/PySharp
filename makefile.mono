@@ -41,7 +41,7 @@ clr.pyd: Python.Runtime.dll
 	./src/runtime/clrmodule.il;
 
 
-clr.so: Python.Runtime.dll
+clr.so: Python.Runtime.dll src/monoclr/clr.c
 	python setup.py build_ext -i
 
 
