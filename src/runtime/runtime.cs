@@ -35,7 +35,7 @@ namespace Python.Runtime {
 #if (PYTHON26)
         internal const string dll = "python26";
 #endif
-#if ! (PYTHON24 || PYTHON25 || PYTHOn26)
+#if ! (PYTHON24 || PYTHON25 || PYTHON26)
 #error You must define either PYTHON24 or PYTHON25!
 #endif
     internal static bool wrap_exceptions;
@@ -51,51 +51,51 @@ namespace Python.Runtime {
         IntPtr dict = Runtime.PyImport_GetModuleDict();
         IntPtr op = Runtime.PyDict_GetItemString(dict, "__builtin__");
 
-        PyBaseObjectType = Runtime.PyObject_GetAttrString(op, "object"); 
+        PyBaseObjectType = Runtime.PyObject_GetAttrString(op, "object");
 
-        PyModuleType = Runtime.PyObject_Type(op); 
-        PyNone = Runtime.PyObject_GetAttrString(op, "None"); 
-        PyTrue = Runtime.PyObject_GetAttrString(op, "True"); 
-        PyFalse = Runtime.PyObject_GetAttrString(op, "False"); 
+        PyModuleType = Runtime.PyObject_Type(op);
+        PyNone = Runtime.PyObject_GetAttrString(op, "None");
+        PyTrue = Runtime.PyObject_GetAttrString(op, "True");
+        PyFalse = Runtime.PyObject_GetAttrString(op, "False");
 
-        PyBoolType = Runtime.PyObject_Type(PyTrue); 
-        PyNoneType = Runtime.PyObject_Type(PyNone); 
-        PyTypeType = Runtime.PyObject_Type(PyNoneType); 
+        PyBoolType = Runtime.PyObject_Type(PyTrue);
+        PyNoneType = Runtime.PyObject_Type(PyNone);
+        PyTypeType = Runtime.PyObject_Type(PyNoneType);
 
         op = Runtime.PyObject_GetAttrString(dict, "keys");
         PyMethodType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
 
         op = Runtime.PyString_FromString("string");
-        PyStringType = Runtime.PyObject_Type(op); 
+        PyStringType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
 
         op = Runtime.PyUnicode_FromString("unicode");
-        PyUnicodeType = Runtime.PyObject_Type(op); 
+        PyUnicodeType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
 
         op = Runtime.PyTuple_New(0);
-        PyTupleType = Runtime.PyObject_Type(op); 
+        PyTupleType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
 
         op = Runtime.PyList_New(0);
-        PyListType = Runtime.PyObject_Type(op); 
+        PyListType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
 
         op = Runtime.PyDict_New();
-        PyDictType = Runtime.PyObject_Type(op); 
+        PyDictType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
 
         op = Runtime.PyInt_FromInt32(0);
-        PyIntType = Runtime.PyObject_Type(op);  
+        PyIntType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
 
         op = Runtime.PyLong_FromLong(0);
-        PyLongType = Runtime.PyObject_Type(op); 
+        PyLongType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
 
         op = Runtime.PyFloat_FromDouble(0);
-        PyFloatType = Runtime.PyObject_Type(op); 
+        PyFloatType = Runtime.PyObject_Type(op);
         Runtime.Decref(op);
 
         IntPtr s = Runtime.PyString_FromString("_temp");
@@ -104,7 +104,7 @@ namespace Python.Runtime {
         PyClassType = Runtime.PyObject_Type(c);
 
         IntPtr i = Runtime.PyInstance_New(c, IntPtr.Zero, IntPtr.Zero);
-        PyInstanceType = Runtime.PyObject_Type(i); 
+        PyInstanceType = Runtime.PyObject_Type(i);
 
         Runtime.Decref(s);
         Runtime.Decref(i);
@@ -124,7 +124,7 @@ namespace Python.Runtime {
 #if (PYTHON25)
         wrap_exceptions = false;
 #else
-        if (Runtime.PyObject_TYPE(op) == PyClassType) { 
+        if (Runtime.PyObject_TYPE(op) == PyClassType) {
             wrap_exceptions = true;
         }
 #endif
@@ -168,8 +168,8 @@ namespace Python.Runtime {
     internal static IntPtr PyUnicodeType;
     internal static IntPtr PyStringType;
     internal static IntPtr PyTupleType;
-    internal static IntPtr PyListType;    
-    internal static IntPtr PyDictType;    
+    internal static IntPtr PyListType;
+    internal static IntPtr PyDictType;
     internal static IntPtr PyIntType;
     internal static IntPtr PyLongType;
     internal static IntPtr PyFloatType;
@@ -197,7 +197,7 @@ namespace Python.Runtime {
         for (int i = 0; i < size; i++) {
             IntPtr item = Runtime.PyTuple_GetItem(args, i);
             Runtime.Incref(item);
-            Runtime.PyTuple_SetItem(items, i + 1, item);   
+            Runtime.PyTuple_SetItem(items, i + 1, item);
         }
 
         return items;
@@ -213,13 +213,13 @@ namespace Python.Runtime {
         for (int i = 0; i < size; i++) {
             item = Runtime.PyTuple_GetItem(t, i);
             Runtime.Incref(item);
-            Runtime.PyTuple_SetItem(items, i, item);   
+            Runtime.PyTuple_SetItem(items, i, item);
         }
 
         for (int n = 0; n < add; n++) {
             item = args[n];
             Runtime.Incref(item);
-            Runtime.PyTuple_SetItem(items, size + n, item);   
+            Runtime.PyTuple_SetItem(items, size + n, item);
         }
 
         return items;
@@ -273,7 +273,7 @@ namespace Python.Runtime {
     }
 
     //===================================================================
-    // Managed exports of the Python C API. Where appropriate, we do 
+    // Managed exports of the Python C API. Where appropriate, we do
     // some optimization to avoid managed <--> unmanaged transitions
     // (mostly for heavily used methods).
     //===================================================================
@@ -351,7 +351,7 @@ namespace Python.Runtime {
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            ExactSpelling=true, CharSet=CharSet.Ansi)]
-    internal unsafe static extern int 
+    internal unsafe static extern int
     PyThread_get_thread_ident();
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
@@ -543,10 +543,10 @@ namespace Python.Runtime {
     //====================================================================
 
     // A macro-like method to get the type of a Python object. This is
-    // designed to be lean and mean in IL & avoid managed <-> unmanaged 
+    // designed to be lean and mean in IL & avoid managed <-> unmanaged
     // transitions. Note that this does not incref the type object.
 
-    internal unsafe static IntPtr 
+    internal unsafe static IntPtr
     PyObject_TYPE(IntPtr op) {
         void *p = (void *)op;
         if ((void *)0 == p) {
@@ -564,7 +564,7 @@ namespace Python.Runtime {
     // This version avoids a managed <-> unmanaged transition. This one
     // does incref the returned type object.
 
-    internal unsafe static IntPtr 
+    internal unsafe static IntPtr
     PyObject_Type(IntPtr op) {
         IntPtr tp = PyObject_TYPE(op);
         Runtime.Incref(tp);
@@ -941,7 +941,7 @@ namespace Python.Runtime {
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            EntryPoint="PyString_AsString",
            ExactSpelling=true, CharSet=CharSet.Ansi)]
-    internal unsafe static extern IntPtr 
+    internal unsafe static extern IntPtr
     PyString_AS_STRING(IntPtr op);
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
@@ -993,7 +993,7 @@ namespace Python.Runtime {
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            EntryPoint="PyUnicodeUCS2_FromOrdinal",
            ExactSpelling=true, CharSet=CharSet.Unicode)]
-    internal unsafe static extern IntPtr 
+    internal unsafe static extern IntPtr
     PyUnicode_FromOrdinal(int c);
 
     internal static IntPtr PyUnicode_FromString(string s)
@@ -1042,7 +1042,7 @@ namespace Python.Runtime {
            ExactSpelling = true)]
     internal unsafe static extern IntPtr
     PyUnicode_FromUnicode(
-    [MarshalAs (UnmanagedType.CustomMarshaler, 
+    [MarshalAs (UnmanagedType.CustomMarshaler,
          MarshalTypeRef=typeof(Utf32Marshaler))]
     string s, int size);
 
@@ -1360,7 +1360,7 @@ namespace Python.Runtime {
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            ExactSpelling=true, CharSet=CharSet.Ansi)]
-    internal unsafe static extern bool 
+    internal unsafe static extern bool
     PyType_IsSubtype(IntPtr t1, IntPtr t2);
 
         internal static bool PyObject_TypeCheck(IntPtr ob, IntPtr tp) {
@@ -1410,17 +1410,17 @@ namespace Python.Runtime {
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            ExactSpelling=true, CharSet=CharSet.Ansi)]
-    internal unsafe static extern void 
+    internal unsafe static extern void
     PyObject_GC_Del(IntPtr tp);
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            ExactSpelling=true, CharSet=CharSet.Ansi)]
-    internal unsafe static extern void 
+    internal unsafe static extern void
     PyObject_GC_Track(IntPtr tp);
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            ExactSpelling=true, CharSet=CharSet.Ansi)]
-    internal unsafe static extern void 
+    internal unsafe static extern void
     PyObject_GC_UnTrack(IntPtr tp);
 
 
