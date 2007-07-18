@@ -32,7 +32,8 @@ def pkgconfig(*packages, **kw):
     return kw
 
 clr = Extension('clr',
-    ['src/monoclr/clr.c'],
+    ['src/monoclr/clrmod.c', 'src/monoclr/pynetinit.c'],
+    depends=['src/monoclr/pynetclr.h'],
     **pkgconfig('mono')
     )
 

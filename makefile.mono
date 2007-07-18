@@ -14,8 +14,8 @@ CSC=gmcs
 PYTHONVER=PYTHON25
 #PYTHONVER=PYTHON26
 # unicode width
-#UCS=UCS2
-UCS=UCS4
+UCS=UCS2
+#UCS=UCS4
 
 all: python.exe clr.so Python.Test.dll
 
@@ -30,7 +30,7 @@ python.exe: Python.Runtime.dll
 
 Python.Runtime.dll:
 	cd src; cd runtime; \
-	$(CSC) /define:$(PYTHONVER),$(UCS) /nologo /unsafe /target:library \
+	$(CSC) /define:$(PYTHONVER),$(UCS),DEBUG /nologo /unsafe /target:library \
 	/reference:Mono.Posix.dll \
 	/out:../../Python.Runtime.dll /recurse:*.cs
 	cd ..; cd ..;
@@ -41,7 +41,8 @@ clr.pyd: Python.Runtime.dll
 	./src/runtime/clrmodule.il;
 
 
-clr.so: Python.Runtime.dll src/monoclr/clr.c
+clr.so: Python.Runtime.dll src/monoclr/clrmod.c src/monoclr/pynetclr.h \
+    src/monoclr/pynetinit.c
 	python setup.py build_ext -i
 
 

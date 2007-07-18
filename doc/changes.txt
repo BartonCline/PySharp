@@ -38,6 +38,9 @@ Python for .NET Changes
       (src/monoclr). XXX DOES NOT WORK
       [tiran]
 
+    - Added yet another python prompt. This time it's a C application that
+      embedds both Python and Mono. It may be useful as an example app for
+      others and I need it to debug a nasty bug. [tiran]
 
   PythonNet 2.0 alpha 1
   ---------------------------------------------------------------------------
