@@ -244,6 +244,12 @@ class CompatibilityTests(unittest.TestCase):
             spam = getattr(System, 1)
 
         self.failUnlessRaises(TypeError, test)
+        
+    def test000MultipleImports(self):
+        # import CLR did raise a Seg Fault once
+        # test if the Exceptions.warn() method still causes it
+        for n in range(100):
+            import CLR
 
 
 def test_suite():

@@ -117,19 +117,20 @@ namespace Python.Runtime {
         // of the Python runtime that do not allow new-style classes to
         // be used as exceptions (Python versions 2.4 and lower).
 
+#if (PYTHON25)
+        wrap_exceptions = false;
+#else
         IntPtr m = PyImport_ImportModule("exceptions");
         Exceptions.ErrorCheck(m);
         op = Runtime.PyObject_GetAttrString(m, "Exception");
         Exceptions.ErrorCheck(op);
-#if (PYTHON25)
-        wrap_exceptions = false;
-#else
         if (Runtime.PyObject_TYPE(op) == PyClassType) {
             wrap_exceptions = true;
         }
-#endif
         Runtime.Decref(op);
         Runtime.Decref(m);
+#endif
+
 
         // Initialize modules that depend on the runtime class.
         AssemblyManager.Initialize();

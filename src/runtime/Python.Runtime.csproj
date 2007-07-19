@@ -79,6 +79,7 @@
     <Compile Include="methodobject.cs" />
     <Compile Include="methodwrapper.cs" />
     <Compile Include="moduleobject.cs" />
+    <Compile Include="monosupport.cs" />
     <Compile Include="nativecall.cs" />
     <Compile Include="overload.cs" />
     <Compile Include="propertyobject.cs" />

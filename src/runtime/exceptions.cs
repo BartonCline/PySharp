@@ -129,13 +129,18 @@ namespace Python.Runtime {
 	// Initialization performed on startup of the Python runtime.
 	//===================================================================
 
+        internal static IntPtr warnings_module;
+        internal static IntPtr exceptions_module;
+
 	internal static void Initialize() {
-	    IntPtr module = Runtime.PyImport_ImportModule("exceptions");
-            Exceptions.ErrorCheck(module);
+	    exceptions_module = Runtime.PyImport_ImportModule("exceptions");
+            Exceptions.ErrorCheck(exceptions_module);
+            warnings_module = Runtime.PyImport_ImportModule("warnings");
+            Exceptions.ErrorCheck(warnings_module);
 	    Type type = typeof(Exceptions);
 	    foreach (FieldInfo fi in type.GetFields(BindingFlags.Public | 
 						    BindingFlags.Static)) {
-		IntPtr op = Runtime.PyObject_GetAttrString(module, fi.Name);
+		IntPtr op = Runtime.PyObject_GetAttrString(exceptions_module, fi.Name);
                 if (op != IntPtr.Zero) {
                     fi.SetValue(type, op);
                 }
@@ -144,7 +149,6 @@ namespace Python.Runtime {
                     DebugUtil.Print("Unknown exception: " + fi.Name);
                 }
 	    }
-	    Runtime.Decref(module);
 	    Runtime.PyErr_Clear();
 	    if (Runtime.wrap_exceptions) {
 		SetupExceptionHack();
@@ -165,6 +169,8 @@ namespace Python.Runtime {
   		    Runtime.Decref(op);
                 }
 	    }
+            Runtime.Decref(exceptions_module);
+            Runtime.Decref(warnings_module);
 	}
 
         /// <summary>
@@ -485,38 +491,47 @@ namespace Python.Runtime {
         /// <summary>
         /// Alias for Python's warnings.warn() function.
         /// </summary>
-        public static IntPtr warn(string message, IntPtr exception, int stacklevel)
+        public static void warn(string message, IntPtr exception, int stacklevel)
         {
             if ((exception == IntPtr.Zero) ||
                 (Runtime.PyObject_IsSubclass(exception, Exceptions.Warning) != 1)) {
-                    return Exceptions.RaiseTypeError("Invalid exception");
+                    Exceptions.RaiseTypeError("Invalid exception");
             }
 
-            PyObject warnings = PythonEngine.ImportModule("warnings");
-            if (warnings == null) {
-                Exceptions.SetError(Exceptions.ImportError, "No module named warnings");
-                return IntPtr.Zero;
-            }
-            Runtime.Incref(exception);
-            PyObject result = warnings.InvokeMethod("warn", 
-                new PyString(message), new PyObject(exception),
-                new PyInt(1));
-            return result.Handle;
+            Runtime.Incref(warnings_module);
+            IntPtr warn = Runtime.PyObject_GetAttrString(warnings_module, "warn");
+            Runtime.Decref(warnings_module);
+            Exceptions.ErrorCheck(warn);
+
+            IntPtr args = Runtime.PyTuple_New(3);
+            IntPtr msg = Runtime.PyString_FromString(message);
+            Runtime.Incref(exception); // PyTuple_SetItem steals a reference
+            IntPtr level = Runtime.PyInt_FromInt32(stacklevel);
+            Runtime.PyTuple_SetItem(args, 0, msg);
+            Runtime.PyTuple_SetItem(args, 1, exception);
+            Runtime.PyTuple_SetItem(args, 2, level);
+
+            IntPtr result = Runtime.PyObject_CallObject(warn, args);
+            Exceptions.ErrorCheck(result);
+
+            Runtime.Decref(warn);
+            Runtime.Decref(result);
+            Runtime.Decref(args);
         }
 
-        public static IntPtr warn(string message, IntPtr exception)
+        public static void warn(string message, IntPtr exception)
         {
-            return warn(message, exception, 1);
+            warn(message, exception, 1);
         }
 
-        public static IntPtr deprecation(string message, int stacklevel)
+        public static void deprecation(string message, int stacklevel)
         {
-            return warn(message, Exceptions.DeprecationWarning, stacklevel);
+            warn(message, Exceptions.DeprecationWarning, stacklevel);
         }
 
-        public static IntPtr deprecation(string message)
+        public static void deprecation(string message)
         {
-            return deprecation(message, 1);
+            deprecation(message, 1);
         }
 
 	//====================================================================
