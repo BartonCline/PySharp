@@ -23,17 +23,19 @@
 #define MONO_DOMAIN "Python.Runtime"
 #define PR_ASSEMBLY "Python.Runtime.dll"
 
-int error(char *msg);
-int InitializePythonNet(void);
-void main_thread_handler(gpointer user_data);
-
 typedef struct {
     MonoDomain *domain;
     MonoAssembly *pr_assm;
-    MonoMethod *initext;
+    MonoMethod *shutdown;
     char *pr_file;
     char *error;
-} PR_MainThreadArgs;
+    char *init_name;
+    char *shutdown_name;
+} PyNet_Args;
+
+PyNet_Args* PyNet_Init(int);
+void PyNet_Finalize(PyNet_Args*);
+void main_thread_handler(gpointer user_data);
 
 #endif // PYNET_CLR_H
 

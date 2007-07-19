@@ -16,11 +16,14 @@
 
 #include "pynetclr.h"
 
-int main(int argc, char *argv[]) {
-    Py_Initialize();
-    InitializePythonNet();
+int main(int argc, char **argv) {
+    PyNet_Args *pn_args;
+    pn_args = PyNet_Init(0);
+    if (pn_args->error) {
+        exit(1);
+    }
     int rc = Py_Main(argc, argv);
-    Py_Finalize();
-    return rc;
+    PyNet_Finalize(pn_args);
+    exit(rc);
 }
 

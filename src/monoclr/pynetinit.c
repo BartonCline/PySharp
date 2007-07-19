@@ -11,15 +11,18 @@
 
 #include "pynetclr.h"
 
-int error(char *msg) {
-    // XXX set python exception
-    printf(msg);
-    return -1;
-}
-
-int InitializePythonNet(void) {
-    MonoDomain *domain;
-    PR_MainThreadArgs main_args; 
+PyNet_Args* PyNet_Init(int ext) {
+    PyNet_Args *pn_args;
+    pn_args = (PyNet_Args *)malloc(sizeof(PyNet_Args));
+    pn_args->pr_file = PR_ASSEMBLY;
+    pn_args->error = NULL;
+    pn_args->shutdown = NULL;
+    if (ext == 0) {
+        pn_args->init_name = "Python.Runtime:Initialize()";
+    } else {
+        pn_args->init_name = "Python.Runtime:InitExt()";
+    }
+    pn_args->shutdown_name = "Python.Runtime:Shutdown()";
 
     /*
      * Load the default Mono configuration file, this is needed
@@ -28,55 +31,88 @@ int InitializePythonNet(void) {
      */
     mono_config_parse(NULL);
 
-    domain = mono_jit_init_version(MONO_DOMAIN, MONO_VERSION);
-    main_args.domain = domain;
-    main_args.pr_file = PR_ASSEMBLY;
-    main_args.error = NULL;
+    pn_args->domain = mono_jit_init_version(MONO_DOMAIN, MONO_VERSION);
 
-    mono_runtime_exec_managed_code (domain, main_thread_handler,
-                                    &main_args);
-    if (main_args.error) 
-        return error(main_args.error);
-    return 0;
+    mono_runtime_exec_managed_code(pn_args->domain, main_thread_handler,
+                                   pn_args);
+    if (pn_args->error != NULL) {
+        printf("CRITICAL ERROR\n");
+        printf(pn_args->error);
+        printf("\n\n");
+    }
+    return pn_args;
 } 
 
+void PyNet_Finalize(PyNet_Args *pn_args) {
+    MonoObject *exception = NULL;
+
+    if (pn_args->shutdown) {
+        mono_runtime_invoke(pn_args->shutdown, NULL, NULL, &exception);
+        if (exception) {
+            pn_args->error = "An exception was raised during shutdown";
+            printf(pn_args->error);
+        }
+	pn_args->shutdown = NULL;
+    }
+    
+    if (pn_args->domain) {
+        mono_jit_cleanup(pn_args->domain);
+        pn_args->domain = NULL;
+    }
+    free(pn_args);
+}
+
+MonoMethod *getMethodFromClass(MonoClass *cls, char *name) {
+    MonoMethodDesc *method_desc;
+    MonoMethod *method;
+
+    method_desc = mono_method_desc_new(name, 1);
+    method = mono_method_desc_search_in_class(method_desc, cls);
+    mono_method_desc_free(method_desc);
+
+    return method;
+}
+
 void main_thread_handler (gpointer user_data) {
-    PR_MainThreadArgs *main_args=(PR_MainThreadArgs *)user_data;
-    MonoMethodDesc *initext_desc;
+    PyNet_Args *pn_args=(PyNet_Args *)user_data;
+    MonoMethod *init;
     MonoImage *pr_image;
     MonoClass *pythonengine;
     MonoObject *exception = NULL;
 
-    main_args->pr_assm = mono_domain_assembly_open(main_args->domain, main_args->pr_file);
-    if (!main_args->pr_assm) {
-        main_args->error = "Unable to load assembly";
+    pn_args->pr_assm = mono_domain_assembly_open(pn_args->domain, pn_args->pr_file);
+    if (!pn_args->pr_assm) {
+        pn_args->error = "Unable to load assembly";
         return;
     }
 
-    pr_image = mono_assembly_get_image(main_args->pr_assm);
+    pr_image = mono_assembly_get_image(pn_args->pr_assm);
     if (!pr_image) {
-        main_args->error = "Unable to get image";
+        pn_args->error = "Unable to get image";
 	return;
     }
 
     pythonengine = mono_class_from_name(pr_image, "Python.Runtime", "PythonEngine");
     if (!pythonengine) {
-        main_args->error = "Unable to load class PythonEngine from Python.Runtime";
+        pn_args->error = "Unable to load class PythonEngine from Python.Runtime";
 	return;
     }
 
-    initext_desc = mono_method_desc_new("Python.Runtime:InitExt()", 1);
-
-    main_args->initext = mono_method_desc_search_in_class(initext_desc, pythonengine);
-    if (!main_args->initext) {
-        main_args->error = "Unable to fetch InitExt() from PythonEngine";
+    init = getMethodFromClass(pythonengine, pn_args->init_name);
+    if (!init) {
+        pn_args->error = "Unable to fetch Init method from PythonEngine";
 	return;
     }
 
-    mono_runtime_invoke(main_args->initext, NULL, NULL, &exception);
-
+    pn_args->shutdown = getMethodFromClass(pythonengine, pn_args->shutdown_name);
+    if (!pn_args->shutdown) {
+        pn_args->error = "Unable to fetch shutdown method from PythonEngine";
+	return;
+    }
+    
+    mono_runtime_invoke(init, NULL, NULL, &exception);
     if (exception) {
-        main_args->error = "An exception was raised";
+        pn_args->error = "An exception was raised";
 	return;
     }
 }

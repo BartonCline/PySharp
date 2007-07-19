@@ -14,8 +14,8 @@ CSC=gmcs
 PYTHONVER=PYTHON25
 #PYTHONVER=PYTHON26
 # unicode width
-UCS=UCS2
-#UCS=UCS4
+#UCS=UCS2
+UCS=UCS4
 
 all: python.exe clr.so Python.Test.dll
 

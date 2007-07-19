@@ -26,6 +26,8 @@ PyDoc_STRVAR(clr_module_doc,
 "attribute to make it distinguishable from the real clr module."
 );
 
+static PyNet_Args *pn_args;
+
 PyMODINIT_FUNC
 initclr(void)
 {
@@ -38,7 +40,11 @@ initclr(void)
         PyModule_AddObject(m, "facade", Py_True);
         Py_INCREF(Py_True);
 
-        if (InitializePythonNet() != 0) 
-                return;
+        pn_args = PyNet_Init(0);
+        if (pn_args->error) {
+            // ERROR
+            printf(pn_args->error);
+            return;
+        }
 }
 
