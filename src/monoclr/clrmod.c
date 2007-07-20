@@ -11,10 +11,6 @@
 
 #include "pynetclr.h" 
 
-#warning ***************************
-#warning  XXX: clr.so does NOT work
-#warning ***************************
-
 /* List of functions defined in the module */
 static PyMethodDef clr_methods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */

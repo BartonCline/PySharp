@@ -33,12 +33,20 @@ PyNet_Args* PyNet_Init(int ext) {
 
     pn_args->domain = mono_jit_init_version(MONO_DOMAIN, MONO_VERSION);
 
-    mono_runtime_exec_managed_code(pn_args->domain, main_thread_handler,
-                                   pn_args);
+    /* I can't use this call to run the main_thread_handler. The function
+     * runs it in another thread but *this* thread holds the Python
+     * import lock -> DEAD LOCK.
+     *
+     * mono_runtime_exec_managed_code(pn_args->domain, main_thread_handler,
+     *                                pn_args);
+     */
+				   
+    main_thread_handler(pn_args);
+
     if (pn_args->error != NULL) {
-        printf("CRITICAL ERROR\n");
-        printf(pn_args->error);
-        printf("\n\n");
+        fprintf(stderr, "CRITICAL ERROR\n");
+        fprintf(stderr, pn_args->error);
+        fprintf(stderr, "\n\n");
     }
     return pn_args;
 } 
@@ -50,7 +58,8 @@ void PyNet_Finalize(PyNet_Args *pn_args) {
         mono_runtime_invoke(pn_args->shutdown, NULL, NULL, &exception);
         if (exception) {
             pn_args->error = "An exception was raised during shutdown";
-            printf(pn_args->error);
+            fprintf(stderr, pn_args->error);
+	    fprintf(stderr, "\n");
         }
 	pn_args->shutdown = NULL;
     }
@@ -109,11 +118,10 @@ void main_thread_handler (gpointer user_data) {
         pn_args->error = "Unable to fetch shutdown method from PythonEngine";
 	return;
     }
-    
+
     mono_runtime_invoke(init, NULL, NULL, &exception);
     if (exception) {
         pn_args->error = "An exception was raised";
 	return;
     }
 }
-
