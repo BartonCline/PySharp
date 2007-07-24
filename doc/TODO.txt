@@ -1,0 +1,35 @@
+TODO list
+=========
+
+For PythonNet 2.0 
+-----------------
+
+ * Implement support for ModulePropertyAttribute.
+
+ * Replace CLRModule.preload code with ModulePropertyAttribute specific code.
+ 
+ * Deprecate implicit loading of assemblies
+
+ * Add support for implicit calls to overloaded methods. 
+   OverloadedMethod[string, int]("egg", 42) works
+   OverloadedMethod("egg", 42) does NOT work
+
+ * Debug failing unit tests under Mono and report them if they are caused
+   by incompatibilities in Mono. 
+
+Future and nice-to-have features
+--------------------------------
+
+ * Add support for Python's debug builds. Debug builds have additional fields
+   in the struct. Py_DEBUG implies Py_TRACE_REFS and Py_REF_DEBUG which changes
+   the memory address of every struct using PyObject and PyVarObject. One has to
+   fix the offsets in interops.cs and Decref() and Incref() in runtime.cs, maybe
+   more.
+
+ * Support Python 2.6. The most important feature I was able to isolate is the
+   PyType_FastSubclass macro and related TypeFlags in interops.cs.
+
+ * Let's talk to the Debian and Ubuntu maintainers for Python in order to convince
+   them to build Python with --enable-shared. Ubuntu's Python is semi static and not
+   linked against libpython2.x.so. This causes trouble with clr.so. 
+

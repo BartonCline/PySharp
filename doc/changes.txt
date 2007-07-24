@@ -42,6 +42,13 @@ Python for .NET Changes
       embedds both Python and Mono. It may be useful as an example app for
       others and I need it to debug a nasty bug. [tiran]
 
+    - Implemented ModuleFunctionAttribute and added ForbidPythonThreadsAttribute.
+      The latter is required for module functions which invoke Python methods.
+      [tiran]
+
+    - Added clr.AddReference("assembly name"), clr.FindAssembly("name") and
+      clr.ListAssemblies(verbose). [tiran]
+
   PythonNet 2.0 alpha 1
   ---------------------------------------------------------------------------
 
