@@ -280,26 +280,36 @@ namespace Python.Runtime {
     //===================================================================
 
     internal unsafe static void Incref(IntPtr op) {
+#if (Py_DEBUG)
+        Py_IncRef(op);
+        return;
+#else
         void *p = (void *)op;
         if ((void *)0 != p) {
         if (is32bit) { (*(int *)p)++;  }
         else         { (*(long *)p)++; }
         }
+#endif
     }
 
     internal unsafe static void Decref(IntPtr op) {
         if (op == IntPtr.Zero) {
             DebugUtil.Print("Decref(NULL)");
         }
+#if (Py_DEBUG)
+        // Py_DecRef calls Python's Py_DECREF
+        Py_DecRef(op);
+        return;
+#else
         void *p = (void *)op;
         if ((void *)0 != p) {
         if (is32bit) { --(*(int *)p);  }
         else         { --(*(long *)p); }
         if ((*(int *)p) == 0) {
+            // PyObject_HEAD: struct _typeobject *ob_type
             void *t = is32bit ? (void *)(*((uint *)p + 1)) :
                             (void *)(*((ulong *)p + 1));
-            void *f = is32bit ? (void *)(*((uint *)t + 6)) :
-                            (void *)(*((ulong *)t + 6));
+            // PyTypeObject: destructor tp_dealloc 
             if ((void *)0 == f) {
             return;
             }
@@ -307,8 +317,22 @@ namespace Python.Runtime {
             return;
         }
         }
+#endif
     }
 
+#if (Py_DEBUG)
+    // Py_IncRef and Py_DecRef are taking care of the extra payload
+    // in Py_DEBUG builds of Python like _Py_RefTotal 
+    [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+           ExactSpelling=true, CharSet=CharSet.Ansi)]
+    private unsafe static extern void
+    Py_IncRef(IntPtr ob); 
+
+   [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
+           ExactSpelling=true, CharSet=CharSet.Ansi)]
+    private unsafe static extern void
+    Py_DecRef(IntPtr ob);
+#endif
 
     [DllImport(Runtime.dll, CallingConvention=CallingConvention.Cdecl,
            ExactSpelling=true, CharSet=CharSet.Ansi)]

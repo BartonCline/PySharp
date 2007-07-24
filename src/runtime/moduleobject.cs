@@ -45,6 +45,8 @@ namespace Python.Runtime {
 	    Runtime.Decref(pyname);
 
 	    Marshal.WriteIntPtr(this.pyHandle, ObjectOffset.ob_dict, dict);
+
+            InitializeModuleMembers();
 	}
 
 
@@ -177,6 +179,53 @@ namespace Python.Runtime {
 	    }
 	}
 
+        /// <summary>
+        /// Initialize module level functions and attributes
+        /// </summary>
+        internal void InitializeModuleMembers()
+        {
+            Type funcmarker = typeof(ModuleFunctionAttribute);
+            Type propmarker = typeof(ModulePropertyAttribute);
+            Type ftmarker = typeof(ForbidPythonThreadsAttribute);
+            Type type = this.GetType();
+
+            BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
+
+            while (type != null)
+            {
+                MethodInfo[] methods = type.GetMethods(flags);
+                for (int i = 0; i < methods.Length; i++)
+                {
+                    MethodInfo method = methods[i];
+                    object[] attrs = method.GetCustomAttributes(funcmarker, false);
+                    object[] forbid = method.GetCustomAttributes(ftmarker, false);
+                    bool allow_threads = (forbid.Length == 0);
+                    if (attrs.Length > 0)
+                    {
+                        string name = method.Name;
+                        MethodInfo[] mi = new MethodInfo[1];
+                        mi[0] = method;
+                        ModuleFunctionObject m = new ModuleFunctionObject(name, mi, allow_threads);
+                        StoreAttribute(name, m);
+                    }
+                }
+
+                PropertyInfo[] properties = type.GetProperties();
+                for (int i = 0; i < properties.Length; i++)
+                {
+                    PropertyInfo property = properties[i];
+                    object[] attrs = property.GetCustomAttributes(propmarker, false);
+                    if (attrs.Length > 0)
+                    {
+                        string name = property.Name;
+                        ModulePropertyObject p = new ModulePropertyObject(property);
+                        StoreAttribute(name, p);
+                    }
+                }
+                type = type.BaseType;
+            }
+        }
+
 
 	//====================================================================
 	// ModuleObject __getattribute__ implementation. Module attributes
@@ -256,6 +305,7 @@ namespace Python.Runtime {
     {
         protected static bool hacked = false;
         protected static bool interactive_preload = true;
+
         public bool preload {
             get {
                 IntPtr pybool = Runtime.PyDict_GetItemString(dict, "preload");
@@ -342,6 +392,53 @@ namespace Python.Runtime {
                 return 0;
             }
         }
+
+        public static int AddAssembly(string name) {
+            return 1;
+        }
+
+        [ModuleFunctionAttribute()]
+        [ForbidPythonThreadsAttribute()]
+        public static Assembly AddReference(string name)
+        {
+            AssemblyManager.UpdatePath();
+            Assembly assembly = null;
+            assembly = AssemblyManager.LoadAssemblyPath(name);
+            if (assembly == null)
+            {
+                assembly = AssemblyManager.LoadAssembly(name);
+            }
+            if (assembly == null)
+            {
+                string msg = String.Format("Unable to find assembly '{0}'.", name);
+                throw new System.IO.FileNotFoundException(msg);
+            }
+            return assembly ;
+        }
+
+        [ModuleFunctionAttribute()]
+        [ForbidPythonThreadsAttribute()]
+        public static string FindAssembly(string name)
+        {
+            AssemblyManager.UpdatePath();
+            return AssemblyManager.FindAssembly(name);
+        }
+
+        [ModuleFunctionAttribute()]
+        public static String[] ListAssemblies(bool verbose)
+        {
+            AssemblyName[] assnames = AssemblyManager.ListAssemblies();
+            String[] names = new String[assnames.Length];
+            for (int i = 0; i < assnames.Length; i++)
+            {
+                if (verbose)
+                    names[i] = assnames[i].FullName;
+                else
+                    names[i] = assnames[i].Name;
+            }
+            return names;
+        }
+
     }
 
 }

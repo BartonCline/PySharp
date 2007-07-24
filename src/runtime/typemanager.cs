@@ -275,6 +275,8 @@ namespace Python.Runtime {
 	    flags |= TypeFlags.HaveGC;
 	    Marshal.WriteIntPtr(type, TypeOffset.tp_flags, (IntPtr)flags);
 
+            DebugUtil.DumpType(type);
+
 	    Runtime.PyType_Ready(type);
 
 	    IntPtr dict = Marshal.ReadIntPtr(type, TypeOffset.tp_dict);

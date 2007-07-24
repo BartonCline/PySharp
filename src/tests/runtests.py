@@ -15,6 +15,12 @@ import unittest
 import warnfilter
 warnfilter.addClrWarnfilter()
 
+try:
+    import System
+except ImportError:
+    print "Load clr import hook"
+    import clr
+
 test_modules = (
         'test_exceptions',
         'test_module',

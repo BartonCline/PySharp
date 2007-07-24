@@ -16,6 +16,9 @@ class ModuleTests(unittest.TestCase):
     def isCLRModule(self, object):
         return type(object).__name__ == 'ModuleObject'
 
+    def isCLRRootModule(self, object):
+        return type(object).__name__ == 'CLRModule'
+
     def isCLRClass(self, object):
         return type(object).__name__ == 'CLR Metatype' # for now
 
@@ -25,7 +28,11 @@ class ModuleTests(unittest.TestCase):
            the first test run in the unit tests!"""
 
         from System import String
-        
+
+    def test000importClr(self):
+        import clr
+        self.failUnless(self.isCLRRootModule(clr))
+
     def testPreloadVar(self):
         import clr
         self.failUnless(clr.preload is False, clr.preload)
@@ -318,6 +325,24 @@ class ModuleTests(unittest.TestCase):
 
         self.failUnlessRaises(TypeError, test)
 
+    def test_ClrListAssemblies(self):
+        from clr import ListAssemblies 
+        verbose = list(ListAssemblies(True))
+        short = list(ListAssemblies(False))
+        self.failUnless(u'mscorlib' in short)
+        self.failUnless(u'System' in short)
+        self.failUnless('Culture=' in verbose[0])
+        self.failUnless('Version=' in verbose[0])
+
+    def test_ClrAddReference(self):
+        from clr import AddReference
+        from System.IO import FileNotFoundException
+        for name in ("System", "Python.Runtime"):
+            asm = AddReference(name) 
+            self.assertEqual(asm.GetName().Name, name)
+        
+        self.failUnlessRaises(FileNotFoundException, 
+            AddReference, "somethingtotallysilly")
 
 
 def test_suite():

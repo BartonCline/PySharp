@@ -29,7 +29,7 @@ namespace Python.Runtime {
 	static AssemblyLoadEventHandler lhandler;
 	static ResolveEventHandler rhandler;
 	static Dictionary<string, int> probed;
-	static List<Assembly> assemblies;	
+	static List<Assembly> assemblies;
 	internal static List<string> pypath;
 
 	private AssemblyManager() {}
@@ -148,7 +148,7 @@ namespace Python.Runtime {
 	// using standard load semantics (app base directory then GAC, etc.)
 	//===================================================================
 
-	static string FindAssembly(string name) {
+	public static string FindAssembly(string name) {
 	    char sep = Path.DirectorySeparatorChar;
 	    string path;
 	    string temp;
@@ -183,13 +183,9 @@ namespace Python.Runtime {
 	public static Assembly LoadAssembly(string name) {
 	    Assembly assembly = null;
 	    try {
-
-		//assembly = Assembly.LoadWithPartialName(name);
                 assembly = Assembly.Load(name);
-
 	    }
-	    catch {
-	    }
+	    catch { }
 	    return assembly;
 	}
 
@@ -304,6 +300,17 @@ namespace Python.Runtime {
 	    }
 	}
 
+        public static AssemblyName[] ListAssemblies()
+        {
+            AssemblyName[] names = new AssemblyName[assemblies.Count];
+            Assembly assembly;
+            for (int i=0; i < assemblies.Count; i++)
+            {
+                assembly = assemblies[i];
+                names.SetValue(assembly.GetName(), i);
+            }
+            return names;
+        }
 
 	//===================================================================
 	// Returns true if the given qualified name matches a namespace

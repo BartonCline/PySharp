@@ -27,12 +27,19 @@ namespace Python.Runtime {
 	public PythonMethodAttribute() {}
     }
 
-
     [Serializable()]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
     internal class ModuleFunctionAttribute : Attribute {
 	public ModuleFunctionAttribute() {}
     }
+
+    [Serializable()]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Delegate)]
+    internal class ForbidPythonThreadsAttribute : Attribute
+    {
+        public ForbidPythonThreadsAttribute() { }
+    }
+
 
     [Serializable()]
     [AttributeUsage(AttributeTargets.Property)]
@@ -46,10 +53,16 @@ namespace Python.Runtime {
 
 	static ObjectOffset() {
 	    int size = IntPtr.Size;
-	    ob_refcnt = 0;
-	    ob_type = 1 * size;
-	    ob_dict = 2 * size;
-	    ob_data = 3 * size;
+            int n = 0; // Py_TRACE_REFS add two pointers to PyObject_HEAD 
+#if (Py_DEBUG)
+            _ob_next = 0;
+            _ob_prev = 1 * size;
+            n = 2;
+#endif 
+	    ob_refcnt = (n+0) * size;
+	    ob_type = (n+1) * size;
+	    ob_dict = (n+2) * size;
+	    ob_data = (n+3) * size;
 	}
 
 	public static int magic() {
@@ -57,9 +70,17 @@ namespace Python.Runtime {
 	}
 
 	public static int Size() {
-	    return 4 * IntPtr.Size;
+#if (Py_DEBUG)
+	    return 6 * IntPtr.Size;
+#else
+            return 4 * IntPtr.Size;
+#endif
 	}
 
+#if (Py_DEBUG)
+        public static int _ob_next;
+        public static int _ob_prev;
+#endif
 	public static int ob_refcnt;
 	public static int ob_type;
 	public static int ob_dict;
@@ -82,7 +103,11 @@ namespace Python.Runtime {
 	public static int magic() {
 	    return ob_size;
 	}
-	
+
+#if (Py_DEBUG)
+        public static int _ob_next = 0;
+        public static int _ob_prev = 0;
+#endif
 	public static int ob_refcnt = 0;
 	public static int ob_type = 0;
 	public static int ob_size = 0;
@@ -131,6 +156,14 @@ namespace Python.Runtime {
 	public static int tp_subclasses = 0;
 	public static int tp_weaklist = 0;
 	public static int tp_del = 0;
+        // COUNT_ALLOCS adds some more stuff to PyTypeObject 
+#if (Py_COUNT_ALLOCS)
+        public static int tp_allocs = 0;
+        public static int tp_frees = 0;
+        public static int tp_maxalloc = 0;
+        public static int tp_prev = 0;
+        public static int tp_next = 0;
+#endif
 
 	public static int nb_add = 0;
 	public static int nb_subtract = 0;

@@ -25,6 +25,7 @@ namespace Python.Runtime {
 	public ArrayList list;
 	public MethodBase[] methods;
 	public bool init = false;
+        public bool allow_threads = true;
 
 	internal MethodBinder () {
 	    this.list = new ArrayList();
@@ -258,6 +259,7 @@ namespace Python.Runtime {
 				       MethodBase info) {
 	    Binding binding = this.Bind(inst, args, kw, info);
 	    Object result;
+            IntPtr ts = IntPtr.Zero;
 
 	    if (binding == null) {
 		Exceptions.SetError(Exceptions.TypeError, 
@@ -266,7 +268,10 @@ namespace Python.Runtime {
 		return IntPtr.Zero;
 	    }
 
-	    IntPtr ts = PythonEngine.BeginAllowThreads();
+            if (allow_threads) {
+                ts = PythonEngine.BeginAllowThreads(); 
+            }
+
 	    try {
 		result = binding.info.Invoke(binding.inst, 
 					     BindingFlags.Default, 
@@ -278,12 +283,16 @@ namespace Python.Runtime {
 		if (e.InnerException != null) {
 		    e = e.InnerException;
 		}
-		PythonEngine.EndAllowThreads(ts);
+                if (allow_threads) {
+                    PythonEngine.EndAllowThreads(ts);
+                }
 		Exceptions.SetError(e);
 		return IntPtr.Zero;
 	    }
 
-	    PythonEngine.EndAllowThreads(ts);
+            if (allow_threads) {
+                PythonEngine.EndAllowThreads(ts);
+            }
 
 	    // If there are out parameters, we return a tuple containing
 	    // the result followed by the out parameters. If there is only
