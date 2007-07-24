@@ -55,18 +55,16 @@ Python.Test.dll: Python.Runtime.dll
 
 
 clean:
-	rm -f python.exe Python*.dll Python*.il Python*.il2 Python*.res
-	rm -f clr.*
-	rm -f CLR.dll
-	rm -f *.pyd
-	rm -f ./*~
-	cd src; cd console; rm -f *~; rm -rf bin; rm -rf obj; cd ..; cd ..;
-	cd src; cd runtime; rm -f *~; rm -rf bin; rm -rf obj; cd ..; cd ..;
-	cd src; cd testing; rm -f *~; rm -rf bin; rm -rf obj; cd ..; cd ..;
-	cd src; cd embed_tests; rm -f *~; rm -rf bin; rm -rf obj; rm -f TestResult.xml; cd ..; cd ..;
-	cd src; cd tests; rm -f *~; rm -f *.pyc; cd ..; cd ..;
-	cd doc; rm -f *~; cd ..;
-	cd demo; rm -f *~; cd ..;
+	find . \( -name \*.o -o -name \*.so -o -name \*.py[co] -o -name \
+		\*.dll -o -name \*.exe -o -name \*.pdb -o -name \*.mdb \
+		-o -name \*.pyd -o -name \*~ \) -exec rm -f {} \;
+	rm -f Python*.il Python*.il2 Python*.res
+	rm -rf build/
+	cd src/console; rm -rf bin; rm -rf obj; cd ../..;
+	cd src/runtime; rm -rf bin; rm -rf obj; cd ../..;
+	cd src/testing; rm -rf bin; rm -rf obj; cd ../..;
+	cd src/embed_tests; rm -rf bin; rm -rf obj; rm -f TestResult.xml; cd ../..;
+	cd src/monoclr; make clean; cd ../..
 
 
 test: all
@@ -106,4 +104,8 @@ ucs:
 	# system python
 	python -c "from distutils.sysconfig import get_config_var; \
 	           print 'UCS%i' % get_config_var('Py_UNICODE_SIZE')"
+
+
+monoclr:
+	cd src/monoclr; make; cd ../../
 

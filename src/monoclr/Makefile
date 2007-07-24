@@ -21,4 +21,5 @@ clean:
 	rm -f *.so
 	rm -f clr$(PYTHON)
 	rm -f $(PYTHON)
+	rm -rf build/
 
