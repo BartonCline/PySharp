@@ -309,7 +309,9 @@ namespace Python.Runtime {
             // PyObject_HEAD: struct _typeobject *ob_type
             void *t = is32bit ? (void *)(*((uint *)p + 1)) :
                             (void *)(*((ulong *)p + 1));
-            // PyTypeObject: destructor tp_dealloc 
+            // PyTypeObject: destructor tp_dealloc
+            void* f = is32bit ? (void*)(*((uint*)t + 6)) :
+                (void*)(*((ulong*)t + 6));
             if ((void *)0 == f) {
             return;
             }

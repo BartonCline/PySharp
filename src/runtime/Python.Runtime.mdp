@@ -47,7 +47,9 @@
     <File name="./methodbinding.cs" subtype="Code" buildaction="Compile" />
     <File name="./methodobject.cs" subtype="Code" buildaction="Compile" />
     <File name="./methodwrapper.cs" subtype="Code" buildaction="Compile" />
+    <File name="./modulefunctionobject.cs" subtype="Code" buildaction="Compile" />
     <File name="./moduleobject.cs" subtype="Code" buildaction="Compile" />
+    <File name="./modulepropertyobject.cs" subtype="Code" buildaction="Compile" />
     <File name="./monosupport.cs" subtype="Code" buildaction="Compile" />
     <File name="./nativecall.cs" subtype="Code" buildaction="Compile" />
     <File name="./overload.cs" subtype="Code" buildaction="Compile" />
