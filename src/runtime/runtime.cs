@@ -599,8 +599,8 @@ namespace Python.Runtime {
     }
 
     internal static string PyObject_GetTypeName(IntPtr op) {
-        IntPtr pyType = Marshal.ReadIntPtr(op, IntPtr.Size);
-        IntPtr ppName = Marshal.ReadIntPtr(pyType, (3 * IntPtr.Size));
+        IntPtr pyType = Marshal.ReadIntPtr(op, ObjectOffset.ob_type);
+        IntPtr ppName = Marshal.ReadIntPtr(pyType, TypeOffset.tp_name);
         return Marshal.PtrToStringAnsi(ppName);
     }
 

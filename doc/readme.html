@@ -154,7 +154,7 @@ li {
 </p>
 
 <p>
- Python for .NET is currently compatible with Python releases 2.3 and greater. 
+ Python for .NET is currently compatible with Python releases 2.4 and 2.5. 
  Current releases are available at the 
  <a href="http://pythonnet.sourceforge.net/">
  Python for .NET website
@@ -194,25 +194,74 @@ li {
 </p>
 
 <p>
- <strong>Running on Linux/Mono:</strong> preliminary testing shows that 
- PythonNet will run under <a href="http://www.go-mono.com">Mono</a>, though 
- the Mono runtime is not yet complete so there still may be problems. The 
- Python for .NET integration layer is 100% managed code, so there should be 
- no long-term issues under Mono - it should work better and better as the 
- Mono platform matures.
+ <strong>Running on Linux/Mono:</strong> Preliminary testing shows that 
+ PythonNet runs under <a href="http://www.go-mono.com">Mono</a> without
+ major issues, though the Mono runtime is not yet complete so there 
+ still may be problems. The Python for .NET integration layer is 100% 
+ managed code, so there should be no long-term issues under Mono - it
+ should work better and better as the Mono platform matures.
 </p>
 
 <p>
- Note that if you are running under Mono on a *nix system, you will need 
+ With Mono 1.2.3 and greater it is possible to build PythonNet under Mono.
+ You need to install the Mono suite including the gmcs compiler for .Net
+ 2.0 and mono-dev for the header files headers. The latter is only
+ required if you want to build the tools in src/monoclr.
+</p>
+
+<p>
+ <strong>Note:</strong> Although in theory a Python.Runtime.dll build
+ with Microsoft Visual C# should work under Linux/Mono it doesn't work
+ in pratice due a conflict between UCS-2 and UCS-4 unicode representation.
+ Windows build of Python store unicode as 2 byte objects while most Linux
+ distributions build Python with UCS-4. UCS-4 builds of PythonNet require
+ Mono specific libraries.
+</p>
+
+<p>
+  Note that if you are running under Mono on a *nix system, you will need 
  to have a compatible version of Python installed. You will also need 
  to create a symbolic link to the copy of libpython2.x.so (in your existing 
  Python installation) in the PythonNet directory. This is needed to ensure 
  that the mono interop dll loader will find it by name. For example:
+ to have a compatible version of Python installed. You'll also have to
+ add some aliases to either ~/.mono/config or /etc/mono/config so Mono can
+ find the python25.dll. The doc/ directory contains a sample
+</p>
+ 
+<p>
+ You can use the clr.so extension to add PythonNet to a standard Python 
+ interpreter on *nix. Either you have to copy Python.Runtime.dll next to
+ binary or you have to use the GAC. clr.so does <strong>NOT</strong> work
+ when the interpreter is not build with --enable-shared (Debian, Ubuntu)
+ or libpython2.?.so isn't available. You <strong>must</strong> use a
+ Python binary that is linked dynamically against libpython2.?.so.
+ <pre>ldd /usr/bin/python2.?</pre> has to list libpython2.?.so. When your
+ Python interpreter isn't linked against libpython2.?.so but the shared
+ lib
 </p>
 
-<pre>
-    ln -s /usr/lib/libpython2.4.so ./python24.so
-</pre>
+ <pre>
+    &lt;dllmap dll=&quote;python25&quote; target=&quote;libpython2.5.so&quote; os=&quote;!wi
+ndows&quote; /&gt;
+ </pre>
+ 
+<a name="monoclr_libpython"><a/>
+<p>
+ PythonNet uses compiler symbols in order to build PythonNet for different
+ versions and flavors of Python.
+ <table>
+  <th><td>symbol</td><td>explenetion</td></th>
+  <tr><td>PYTHON24</td><td>build for Python 2.4</td></tr>
+  <tr><td>PYTHON25</td><td>build for Python 2.5</td></tr>
+  <tr><td>PYTHON26</td><td>build for Python 2.6</td></tr>
+  <tr><td>UCS2</td><td>For Python compiled with --enable-unicode=ucs2 (default)</td></tr>
+  <tr><td>UCS4</td><td>For Python compiled with --enable-unicode=ucs4</td></tr>
+  <tr><td>Py_DEBUG</td><td>For Python debug builds (not yet implemented)</td></tr>
+  <tr><td>DEBUG</td><td>Additional debugging (doesn't require Py_DEBUG)</td></tr>
+  <tr><td>TRACE</td><td>Not used</td></tr>
+</table>
+</p>
 
 
 <a name="getting_started"></a>
@@ -249,7 +298,6 @@ li {
  to use the line: &quot'import clr&quot; (lower-case!) to initially load 
  the clr extension module before trying the following examples.
 </p>
-
 
 <a name="importing"></a>
 
