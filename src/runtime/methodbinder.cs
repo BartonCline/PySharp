@@ -36,7 +36,7 @@ namespace Python.Runtime {
             this.list.Add(mi);
         }
 
-        public int Count {
+        internal int Count {
             get { return this.list.Count; }
         }
 
@@ -73,7 +73,7 @@ namespace Python.Runtime {
         // return the MethodInfo that represents the matching closed generic.
         //====================================================================
 
-         internal static MethodInfo MatchParameters(MethodInfo[] mi,Type[] tp) {
+         internal static MethodInfo MatchParameters(MethodInfo[] mi, Type[] tp) {
              int count = tp.Length;
              for (int i = 0; i < mi.Length; i++) {
                 if (!mi[i].IsGenericMethodDefinition) {
@@ -205,9 +205,12 @@ namespace Python.Runtime {
         }
 
         //====================================================================
-        // Bind the given Python instance and arguments to a particular method
-        // overload and return a structure that contains the converted Python
-        // instance, converted arguments and the correct method to call.
+        // Bind the given Python (possibly null) instance and arguments to the
+        // selected method overload. Return a structure that contains the
+        // converted Python instance (if it's not null), converted arguments
+        // and the correct method to call.
+        // The info parameter may be used to limit the method search to a single
+        // attempt at a match
         //====================================================================
 
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw) {
@@ -220,19 +223,17 @@ namespace Python.Runtime {
         }
 
         internal Binding Bind(IntPtr inst, IntPtr args, IntPtr kw,
-                              MethodBase info, MethodInfo[] methodinfo) {
+                              MethodBase info, MethodInfo[] methInfoArr) {
             // loop to find match, return invoker w/ or /wo error
             MethodBase[] _methods = null;
             int pynargs = Runtime.PyTuple_Size(args);
             object arg;
             bool isGeneric = false;
 
-             if (info != null) {
-                _methods = (MethodBase[])Array.CreateInstance(
-                                                typeof(MethodBase), 1
-                                                );
-                 _methods.SetValue(info, 0);
-             }
+            if (info != null) {
+                _methods = (MethodBase[])Array.CreateInstance(typeof(MethodBase), 1);
+                _methods.SetValue(info, 0);
+            }
             else {
                 _methods = GetMethods();
             }
@@ -282,7 +283,7 @@ namespace Python.Runtime {
                         }
                         if (arrayStart == n) {
                             // GetSlice() creates a new reference but GetItem()
-                            // returns only a borrow reference.
+                            // returns only a borrowed reference.
                             Runtime.Decref(op);
                         }
                         margs[n] = arg;
@@ -294,23 +295,39 @@ namespace Python.Runtime {
 
                     Object target = null;
                     if ((!mi.IsStatic) && (inst != IntPtr.Zero)) {
-                        CLRObject co = (CLRObject)ManagedType.GetManagedObject(
-                                                  inst
-                                                  );
+                        //CLRObject co = (CLRObject)ManagedType.GetManagedObject(inst);
+                        // Calling on a ClassObject raises an unhandled exception:
+                        // InvalidCastException: Unable to cast object of type
+                        // 'Python.Runtime.ClassObject' to type 'Python.Runtime.CLRObject'
+                        //
+                        //ManagedType mt = ManagedType.GetManagedObject(inst);
+                        // The above cast would fail if GetManagedObject(inst) returned null.
+                        //CLRObject co = mt as CLRObject;
+
+                        CLRObject co = ManagedType.GetManagedObject(inst) as CLRObject;
+
+                        // Sanity check: this ensures a graceful exit if someone does
+                        // something intentially wrong like call a non-static method
+                        // on the class rather than on an instance of the class.
+                        // XXX maybe better to do this before all the other rigmarole.
+                        if (co == null) {
+                            return null;
+                        }
                         target = co.inst;
                     }
-
+                    // target may or may not be null, here
                     return new Binding(mi, target, margs, outs);
                 }
-            }
+            }   // END foreach MethodBase mi in _methods
+
             // We weren't able to find a matching method but at least one
-            // is a generic method and info is null. That happens when a generic
+            // is a generic method and methodinfo is null. That happens when a generic
             // method was not called using the [] syntax. Let's introspect the
             // type of the arguments and use it to construct the correct method.
-            if (isGeneric && (info == null) && (methodinfo != null))
+            if (isGeneric && (info == null) && (methInfoArr != null))
             {
                 Type[] types = Runtime.PythonArgsToTypeArray(args, true);
-                MethodInfo mi = MethodBinder.MatchParameters(methodinfo, types);
+                MethodInfo mi = MethodBinder.MatchParameters(methInfoArr, types);
                 return Bind(inst, args, kw, mi, null);
             }
 			return null;

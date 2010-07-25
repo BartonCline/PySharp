@@ -33,13 +33,27 @@ namespace Python.Runtime {
         // Python type to use when wrapping the result (may be a subclass).
         //====================================================================
 
-         internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw) {
+        internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw) {
             return this.InvokeRaw(inst, args, kw, null);
         }
-
+        /// <summary>
+        /// InvokeRaw(inst, args, kw, info)  Allows ctor selection to be limited
+        /// to a single attempt at a match by providing the MethodBase to use
+        /// instead of searching the entire MethodBinder.list (generic ArrayList)
+        /// </summary>
+        /// <param name="inst"> (possibly null) instance </param>
+        /// <param name="args"></param>
+        /// <param name="kw"></param>
+        /// <param name="info"> The sole ContructorInfo to use or null </param>
+        /// <returns></returns>
+        /// <remarks>
+        /// 2010-07-24 BC: I added info to the call to Bind()
+        /// Binding binding = this.Bind(inst, args, kw, info);
+        /// to take advantage of Bind()'s ability to use a single CI.
+        /// </remarks>
         internal object InvokeRaw(IntPtr inst, IntPtr args, IntPtr kw,
                                   MethodBase info) {
-            Binding binding = this.Bind(inst, args, kw);
+            Binding binding = this.Bind(inst, args, kw, info);
             Object result;
 
             if (binding == null) {
@@ -55,17 +69,17 @@ namespace Python.Runtime {
                 Runtime.Decref(eargs);
 
                 if (binding == null) {
-                    Exceptions.SetError(Exceptions.TypeError, 
+                    Exceptions.SetError(Exceptions.TypeError,
                                         "no constructor matches given arguments"
                                         );
                     return null;
                 }
             }
 
+            // Fire the selected ctor and catch errors...
+            ConstructorInfo ci = (ConstructorInfo)binding.info;
             // Object construction is presumed to be non-blocking and fast
             // enough that we shouldn't really need to release the GIL.
-
-            ConstructorInfo ci = (ConstructorInfo)binding.info;
             try {
                 result = ci.Invoke(binding.args);
             }
@@ -76,12 +90,7 @@ namespace Python.Runtime {
                 Exceptions.SetError(e);
                 return null;
             }
-
             return result;
         }
-
-
     }
-
-
 }

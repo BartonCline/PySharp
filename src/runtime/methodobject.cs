@@ -21,7 +21,7 @@ namespace Python.Runtime {
 
     internal class MethodObject : ExtensionType {
 
-        internal MethodInfo[] info;
+        internal MethodInfo[] methInfoArray;
         internal string name;
         internal MethodBinding unbound;
         internal MethodBinder binder;
@@ -41,7 +41,7 @@ namespace Python.Runtime {
         private void _MethodObject(string name, MethodInfo[] info)
         {
             this.name = name;
-            this.info = info;
+            this.methInfoArray = info;
             binder = new MethodBinder();
             for (int i = 0; i < info.Length; i++)
             {
@@ -60,7 +60,7 @@ namespace Python.Runtime {
  
         public virtual IntPtr Invoke(IntPtr target, IntPtr args, IntPtr kw,
                                      MethodBase info) {
-            return binder.Invoke(target, args, kw, info, this.info);
+            return binder.Invoke(target, args, kw, info, this.methInfoArray);
         }
 
         //====================================================================
@@ -90,7 +90,7 @@ namespace Python.Runtime {
         // first argument), because in this case we can't know whether to call
         // the instance method unbound or call the static method. 
         //
-        // The rule we is that if there are both instance and static methods
+        // The rule we use is that if there are both instance and static methods
         // with the same name, then we always call the static method. So this
         // method returns true if any of the methods that are represented by 
         // the descriptor are static methods (called by MethodBinding).
@@ -121,12 +121,25 @@ namespace Python.Runtime {
             return Runtime.PyObject_GenericGetAttr(ob, key);
         }
 
-        //====================================================================
-        // Descriptor __get__ implementation. Accessing a CLR method returns
-        // a "bound" method similar to a Python bound method. 
-        //====================================================================
-
-        public static IntPtr tp_descr_get(IntPtr ds, IntPtr ob, IntPtr tp) {
+        /// <summary>
+        /// Descriptor __get__ implementation.
+        /// </summary>
+        /// <param name="ds"> PyObject* to a wrapped MethodObject </param>
+        /// <param name="instance"> the instance that the attribute was accessed through,
+        /// or None when the attribute is accessed through the owner </param>
+        /// <param name="owner"> always the owner class </param>
+        /// <returns> a MethodBinding created one of two ways </returns>
+        /// 
+        /// <remarks>
+        /// Python 2.6.5 docs:
+        /// object.__get__(self, instance, owner)
+        /// Called to get the attribute of the owner class (class attribute access)
+        /// or of an instance of that class (instance attribute access). 
+        /// owner is always the owner class, while instance is the instance that
+        /// the attribute was accessed through, or None when the attribute is accessed through the owner.
+        /// This method should return the (computed) attribute value or raise an AttributeError exception.
+        /// </remarks>
+        public static IntPtr tp_descr_get(IntPtr ds, IntPtr instance, IntPtr owner) {
             MethodObject self = (MethodObject)GetManagedObject(ds);
             MethodBinding binding;
 
@@ -134,26 +147,27 @@ namespace Python.Runtime {
             // an instance) we return an 'unbound' MethodBinding that will
             // cached for future accesses through the type.
 
-            if (ob == IntPtr.Zero) {
+            if (instance == IntPtr.Zero) {
                 if (self.unbound == null) {
                     self.unbound = new MethodBinding(self, IntPtr.Zero);
                 }
                 binding = self.unbound;
-                Runtime.Incref(binding.pyHandle);;
+                // self.unbound holds a reference to the binding so bump the ref count
+                Runtime.Incref(binding.pyHandle);
                 return binding.pyHandle;
             }
 
-            if (Runtime.PyObject_IsInstance(ob, tp) < 1) {
+            if (Runtime.PyObject_IsInstance(instance, owner) < 1) {
                 return Exceptions.RaiseTypeError("invalid argument");
             }
 
-            binding = new MethodBinding(self, ob);
+            binding = new MethodBinding(self, instance);
             return binding.pyHandle;
         }
 
-        //====================================================================
-        // Descriptor __repr__ implementation.
-        //====================================================================
+        /// <summary>
+        /// MethodOject __repr__ implementation.
+        /// </summary>
 
         public static IntPtr tp_repr(IntPtr ob) {
             MethodObject self = (MethodObject)GetManagedObject(ob);

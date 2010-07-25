@@ -110,29 +110,36 @@ namespace Python.Runtime {
             // Now we allocate the Python type object to reflect the given
             // managed type, filling the Python type slots with thunks that
             // point to the managed methods providing the implementation.
-
-
+            
             IntPtr tp = TypeManager.GetTypeHandle(impl, type);
+            // The next line happens in CreateType, but not when we get a
+            // type handle from the TypeManager's cache.
             impl.tpHandle = tp;
 
             // Finally, initialize the class __dict__ and return the object.
             IntPtr dict = Marshal.ReadIntPtr(tp, TypeOffset.tp_dict);
-
-
+            
             IDictionaryEnumerator iter = info.members.GetEnumerator();
             while(iter.MoveNext()) {
-                ManagedType item = (ManagedType)iter.Value;
                 string name = (string)iter.Key;
+                ManagedType item = (ManagedType)iter.Value;
                 Runtime.PyDict_SetItemString(dict, name, item.pyHandle);
             }
 
-            // If class has constructors, generate an __doc__ attribute.
-
+            // If this is a ClassObject AND it has constructors, generate a __doc__ attribute.
+            // required that the ClassObject.ctors be changed to internal
             ClassObject co = impl as ClassObject;
             if (co != null) {
-                IntPtr doc = co.GetDocString();
-                Runtime.PyDict_SetItemString(dict, "__doc__", doc);
-                Runtime.Decref(doc);
+                if (co.ctors.Length > 0) {
+                    // How to implement __overloads__ on the class object???
+                    string name = type.Name;    //"ctors"
+                    Constructors ctors = new Constructors(name, tp, co.binder);
+                    Runtime.PyDict_SetItemString(dict, "__overloads__", ctors.pyHandle);
+
+                    IntPtr doc = co.GetDocString();
+                    Runtime.PyDict_SetItemString(dict, "__doc__", doc);
+                    Runtime.Decref(doc);
+                }
             }
 
             return impl;

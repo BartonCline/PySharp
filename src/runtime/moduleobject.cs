@@ -49,13 +49,16 @@ namespace Python.Runtime {
             InitializeModuleMembers();
         }
 
-
-        //===================================================================
-        // Returns a ClassBase object representing a type that appears in
-        // this module's namespace or a ModuleObject representing a child 
-        // namespace (or null if the name is not found). This method does
-        // not increment the Python refcount of the returned object.
-        //===================================================================
+        /// <summary>
+        /// Returns a ClassBase object representing a type that appears in
+        /// this module's namespace or a ModuleObject representing a child 
+        /// namespace (or null if the name is not found). This method does
+        /// not increment the Python refcount of the returned object.
+        /// </summary>
+        /// <param name="name"> The module's attribute name in managed form. </param>
+        /// <param name="guess"> Attempt using GenericUtil.GenericNameForBaseName
+        /// if the first pass fail? </param>
+        /// <returns></returns>
 
         public ManagedType GetAttribute(string name, bool guess) {
             ManagedType cached = null;
@@ -98,6 +101,7 @@ namespace Python.Runtime {
             // thing happens with implicit assembly loading at a reasonable
             // cost. Ask the AssemblyManager to do implicit loading for each 
             // of the steps in the qualified name, then try it again.
+            // XXX depricate this...
 
             if (AssemblyManager.LoadImplicit(qname)) {
                 if (AssemblyManager.IsValidNamespace(qname)) {
@@ -141,9 +145,9 @@ namespace Python.Runtime {
         }
 
 
-        //===================================================================
-        // Stores an attribute in the instance dict for future lookups.
-         //===================================================================
+        /// <summary>
+        /// Stores an attribute in the instance dict for future lookups.
+        /// </summary>
 
         private void StoreAttribute(string name, ManagedType ob) {
             Runtime.PyDict_SetItemString(dict, name, ob.pyHandle);
@@ -182,12 +186,14 @@ namespace Python.Runtime {
         /// <summary>
         /// Initialize module level functions and attributes
         /// </summary>
-        internal void InitializeModuleMembers()
-        {
+        internal void InitializeModuleMembers() {
             Type funcmarker = typeof(ModuleFunctionAttribute);
             Type propmarker = typeof(ModulePropertyAttribute);
             Type ftmarker = typeof(ForbidPythonThreadsAttribute);
             Type type = this.GetType();
+            // 2010-07-02 BC: ModuleObjects need their ModuleFunctionAttribute tagged
+            // methods assigned to the __doc__ of the Python module:
+            String docString = String.Empty;
 
             BindingFlags flags = BindingFlags.Public | BindingFlags.Static;
 
@@ -203,6 +209,18 @@ namespace Python.Runtime {
                     if (attrs.Length > 0)
                     {
                         string name = method.Name;
+                        // Get doc info
+                        string desc = method.ToString();
+                        int j = desc.IndexOf(" ");
+                        string retType = desc.Substring(0, j);
+                        desc = desc.Substring(j + 1);
+                        if (docString.Length > 0)
+                        {
+                            docString += Environment.NewLine;
+                        }
+                        string s = String.Format("<CLRModuleFunction '{0}' returns {1}>", desc, retType);
+                        docString += s;
+                        // Do the rest of the method setup
                         MethodInfo[] mi = new MethodInfo[1];
                         mi[0] = method;
                         ModuleFunctionObject m = new ModuleFunctionObject(name, mi, allow_threads);
@@ -224,15 +242,24 @@ namespace Python.Runtime {
                 }
                 type = type.BaseType;
             }
+            // Store the doc string
+            IntPtr doc = Runtime.PyString_FromString(docString);
+            Runtime.PyDict_SetItemString(this.dict, "__doc__", doc);
         }
 
 
-        //====================================================================
-        // ModuleObject __getattribute__ implementation. Module attributes
-        // are always either classes or sub-modules representing subordinate 
-        // namespaces. CLR modules implement a lazy pattern - the sub-modules
-        // and classes are created when accessed and cached for future use.
-        //====================================================================
+        /// <summary>
+        /// ModuleObject __getattribute__ implementation. Module attributes
+        /// are always either classes or sub-modules representing subordinate 
+        /// namespaces.
+        /// </summary>
+        /// <param name="ob"> PyObject* to the module. </param>
+        /// <param name="key"> PyObject* to the name. </param>
+        /// <returns> a PyObject* to the attribute or IntPtr.Zero after setting the error. </returns>
+        /// <remarks>
+        /// CLR modules implement a lazy pattern - the sub-modules
+        /// and classes are created when accessed and cached for future use.
+        /// </remarks>
 
         public static IntPtr tp_getattro(IntPtr ob, IntPtr key) {
             ModuleObject self = (ModuleObject)GetManagedObject(ob);
@@ -242,18 +269,21 @@ namespace Python.Runtime {
                 return IntPtr.Zero;
             }
 
+            // First, look in the this modules dictionary. //
             IntPtr op = Runtime.PyDict_GetItem(self.dict, key);
             if (op != IntPtr.Zero) {
                 Runtime.Incref(op);
                 return op;
             }
- 
+
+            // Is it the "__dict__" (is this a shortcut?)?
             string name = Runtime.GetManagedString(key);
             if (name == "__dict__") {
                 Runtime.Incref(self.dict);
                 return self.dict;
             }
 
+            // Nope, get a managed attribute. //
             ManagedType attr = self.GetAttribute(name, true);
 
             if (attr == null) {
@@ -282,9 +312,9 @@ namespace Python.Runtime {
             return attr.pyHandle;
         }
 
-        //====================================================================
-        // ModuleObject __repr__ implementation.
-        //====================================================================
+        /// <summary>
+        /// ModuleObject __repr__ implementation.
+        /// </summary>
 
         public static IntPtr tp_repr(IntPtr ob) {
             ModuleObject self = (ModuleObject)GetManagedObject(ob);
@@ -353,23 +383,69 @@ namespace Python.Runtime {
             preload = preloadFlag;
         }
 
+        //====================================================================
+        // 2010-07-2 BC:   Mr.s Lloyd (brianlloyd) & Heimes (tiran) left this one a bit rough around the edges:
+        // tiran has posted a bug - "loads an assembly multiple times" ID: 1789047 (2007-09-05 23:58:37 UTC)
+        // My solution & reasoning:
+        // Since import A.B will implicitly import A into the calling python module's dict, why not pre-wrap
+        // the ModuleObject here and stash it in clr.__dict__ for future imports
+        //====================================================================
+
+        /// <summary>
+        /// AddReference(name) - Assumes the creation of a Python module from a
+        /// CLI assembly.  It checks the ModuleObject cache before trying to load
+        /// the assebmly using System.Reflection.Assebly.Load*() members.
+        /// Implicitly imports the name into the clr module's dictionary.
+        /// Returns (via Converter.ToPython())an Incref()ed reference
+        /// to the managed ModuleObject
+        /// </summary>
         [ModuleFunctionAttribute()]
         [ForbidPythonThreadsAttribute()]
-        public static Assembly AddReference(string name)
+        public static ModuleObject AddReference(string name)
         {
             AssemblyManager.UpdatePath();
+            ModuleObject mo = null;
             Assembly assembly = null;
-            assembly = AssemblyManager.LoadAssemblyPath(name);
-            if (assembly == null)
-            {
-                assembly = AssemblyManager.LoadAssembly(name);
+
+            // sysDotModules = sys.modules
+            IntPtr sysDotModules = Runtime.PyImport_GetModuleDict();
+            // pyModuleObjPtr = sysDotModules["clr"]
+            IntPtr pyModuleObjPtr = Runtime.PyDict_GetItemString(sysDotModules, "clr");
+            // It's currently unsafe to assume that 'clr' is the calling module
+            // due to the whole "CLR" deprication warning, but it's mostly covered
+
+            ModuleObject self = (ModuleObject)GetManagedObject(pyModuleObjPtr);
+            // The last thing that GetAttribute() does (if successful) is StoreAttribute()
+            // ie. self.dict[name] = ManagedType ob.pyHandle
+            ManagedType mt = self.GetAttribute(name, false);
+            if (mt != null) {
+                mo = mt as ModuleObject;
             }
-            if (assembly == null)
-            {
-                string msg = String.Format("Unable to find assembly '{0}'.", name);
-                throw new System.IO.FileNotFoundException(msg);
+            if (mo == null) {
+                // Try using an augmented search path (the python path).
+                assembly = AssemblyManager.LoadAssemblyPath(name);
+                if (assembly == null) {
+                    // Try using from the application directory or the GAC.
+                    assembly = AssemblyManager.LoadAssembly(name);
+                }
+                if (assembly == null) {
+                    string msg = String.Format("Unable to find assembly '{0}'.", name);
+                    throw new System.IO.FileNotFoundException(msg);
+                }
+                // presumably, AssemblyManager.AssemblyLoadHandler() has called ScanAssembly()
+                // by this point so IsValidNamespace() will allow m = new ModuleObject(qname);
+                // The last thing that GetAttribute() does (if successful) is StoreAttribute()
+                // ie. self.dict[name] = ManagedType ob.pyHandle
+                mt = self.GetAttribute(name, false);
+                if (mt != null) {
+                    mo = mt as ModuleObject;
+                }
             }
-            return assembly ;
+            if (mo == null) {
+                string error = String.Format("Unable to create module '{0}'.", name);
+                Exceptions.SetError(Exceptions.ImportError, error);
+            }
+            return mo;
         }
 
         [ModuleFunctionAttribute()]

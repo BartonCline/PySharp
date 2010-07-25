@@ -14,7 +14,8 @@ using System.Reflection;
 namespace Python.Runtime {
 
     //========================================================================
-    // Implements a Python type that provides access to CLR object methods.
+    // Implements a Python type that provides access to CLR object methods
+    // that are tagged with the PythonMethodAttribute attribute.
     //========================================================================
 
     internal class TypeMethod : MethodObject {
@@ -26,7 +27,7 @@ namespace Python.Runtime {
                base(name, info, allow_threads) { }
 
         public override IntPtr Invoke(IntPtr ob, IntPtr args, IntPtr kw) {
-            MethodInfo mi = this.info[0];
+            MethodInfo mi = this.methInfoArray[0];
             Object[] arglist = new Object[3];
             arglist[0] = ob;
             arglist[1] = args;

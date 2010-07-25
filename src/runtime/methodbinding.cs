@@ -21,39 +21,39 @@ namespace Python.Runtime {
     internal class MethodBinding : ExtensionType {
 
         internal MethodInfo info;
-        internal MethodObject m;
+        internal MethodObject methObj;
         internal IntPtr target;
 
         public MethodBinding(MethodObject m, IntPtr target) : base() {
             Runtime.Incref(target);
             this.target = target;
             this.info = null;
-            this.m = m;
+            this.methObj = m;
         }
 
-         //====================================================================
-         // Implement binding of generic methods using the subscript syntax [].
-         //====================================================================
- 
-         public static IntPtr mp_subscript(IntPtr tp, IntPtr idx) {
-             MethodBinding self = (MethodBinding)GetManagedObject(tp);
+        //====================================================================
+        // Implement binding of generic methods using the subscript syntax [].
+        //====================================================================
+
+        public static IntPtr mp_subscript(IntPtr tp, IntPtr idx) {
+            MethodBinding self = (MethodBinding)GetManagedObject(tp);
 
             Type[] types = Runtime.PythonArgsToTypeArray(idx);
             if (types == null) {
                  return Exceptions.RaiseTypeError("type(s) expected");
             }
 
-             MethodInfo mi = MethodBinder.MatchParameters(self.m.info, types);
+            MethodInfo mi = MethodBinder.MatchParameters(self.methObj.methInfoArray, types);
             if (mi == null) {
-                string e = "No match found for given type params";
+                string e = "No match found for for generic with given type params";
                 return Exceptions.RaiseTypeError(e);
             }
 
-             MethodBinding mb = new MethodBinding(self.m, self.target);
-             mb.info = mi;
-             Runtime.Incref(mb.pyHandle);
-             return mb.pyHandle;            
-         }
+            MethodBinding mb = new MethodBinding(self.methObj, self.target);
+            mb.info = mi;
+            Runtime.Incref(mb.pyHandle);
+            return mb.pyHandle;
+        }
 
 
         //====================================================================
@@ -70,13 +70,13 @@ namespace Python.Runtime {
 
             string name = Runtime.GetManagedString(key);
             if (name == "__doc__") {
-                IntPtr doc = self.m.GetDocString();
+                IntPtr doc = self.methObj.GetDocString();
                 Runtime.Incref(doc);
                 return doc;
             }
 
             if (name == "__overloads__") {
-                OverloadMapper om = new OverloadMapper(self.m, self.target);
+                OverloadMapper om = new OverloadMapper(self.methObj, self.target);
                 Runtime.Incref(om.pyHandle);
                 return om.pyHandle;            
             }
@@ -103,7 +103,7 @@ namespace Python.Runtime {
 					if (sigTp != null)
 					{
 						Type[] genericTp = self.info.GetGenericArguments();
-						MethodInfo betterMatch = MethodBinder.MatchSignatureAndParameters(self.m.info, genericTp, sigTp);
+						MethodInfo betterMatch = MethodBinder.MatchSignatureAndParameters(self.methObj.methInfoArray, genericTp, sigTp);
 						if (betterMatch != null) self.info = betterMatch;
 					}
 				}
@@ -114,7 +114,7 @@ namespace Python.Runtime {
 			// of the overloads are static since we can't know if the intent
 			// was to call the static method or the unbound instance method.
 
-			if ((self.target == IntPtr.Zero) && (!self.m.IsStatic()))
+			if ((self.target == IntPtr.Zero) && (!self.methObj.IsStatic()))
 			{
 				int len = Runtime.PyTuple_Size(args);
 				if (len < 1)
@@ -125,13 +125,13 @@ namespace Python.Runtime {
 				IntPtr uargs = Runtime.PyTuple_GetSlice(args, 1, len);
 				IntPtr inst = Runtime.PyTuple_GetItem(args, 0);
 				Runtime.Incref(inst);
-				IntPtr r = self.m.Invoke(inst, uargs, kw, self.info);
+				IntPtr r = self.methObj.Invoke(inst, uargs, kw, self.info);
 				Runtime.Decref(inst);
 				Runtime.Decref(uargs);
 				return r;
 			}
 
-			return self.m.Invoke(self.target, args, kw, self.info);
+			return self.methObj.Invoke(self.target, args, kw, self.info);
         }
 
 
@@ -151,7 +151,7 @@ namespace Python.Runtime {
                 }
             }
  
-            y = Runtime.PyObject_Hash(self.m.pyHandle).ToInt64();
+            y = Runtime.PyObject_Hash(self.methObj.pyHandle).ToInt64();
             if (y == -1) {
                 return new IntPtr(-1);
             }
@@ -172,7 +172,7 @@ namespace Python.Runtime {
         public static IntPtr tp_repr(IntPtr ob) {
             MethodBinding self = (MethodBinding)GetManagedObject(ob);
             string type = (self.target == IntPtr.Zero) ? "unbound" : "bound";
-            string s = String.Format("<{0} method '{1}'>", type, self.m.name);
+            string s = String.Format("<{0} method '{1}'>", type, self.methObj.name);
             return Runtime.PyString_FromStringAndSize(s, s.Length);
         }
 
